@@ -55,6 +55,7 @@ const DATA_ATTRIBUTES = {
 	originalContent: "data-original-content",
 	hiddenPanel: "data-vscode-hidden-panel",
 	hidden: "data-vscode-hidden",
+	codeButtonBound: "data-vscode-bound",
 };
 
 class DOMUtils {
@@ -104,6 +105,64 @@ class DOMUtils {
 				(containerSelector ? el.closest(containerSelector) : true)
 		);
 		return targetElement?.closest(containerSelector || "*") || null;
+	}
+
+	/**
+	 * GitHub mounts the clone dropdown into a Primer portal that lives outside
+	 * the Code button's subtree, so scoping an observer to that portal is far
+	 * cheaper than watching the whole body. Falls back to the body only while
+	 * the portal hasn't been created yet.
+	 */
+	static getOverlayRoot(): Element {
+		const portalRoots = ["[data-portal-root]", "#__primerPortalRoot__"];
+		for (const selector of portalRoots) {
+			const root = document.querySelector(selector);
+			if (root) return root;
+		}
+		return document.body;
+	}
+}
+
+/**
+ * Waits for an element matching one of `selectors` to appear, then invokes
+ * `onFound` once. The observer is scoped to `root`, matches by selector only
+ * (it never reads textContent), and disconnects the moment the element is
+ * found or the timeout elapses, so it never lingers as an always-on listener.
+ */
+class DOMObserver {
+	static waitForSelector(
+		selectors: string[],
+		onFound: (element: Element) => void,
+		options: { root?: Element; timeoutMs?: number } = {}
+	): void {
+		const existing = DOMUtils.findElement(selectors);
+		if (existing) {
+			onFound(existing);
+			return;
+		}
+
+		let settled = false;
+		let timeoutId = 0;
+
+		const observer = new MutationObserver(() => {
+			const element = DOMUtils.findElement(selectors);
+			if (!element) return;
+			finish();
+			onFound(element);
+		});
+
+		function finish(): void {
+			if (settled) return;
+			settled = true;
+			observer.disconnect();
+			window.clearTimeout(timeoutId);
+		}
+
+		observer.observe(options.root ?? document.body, {
+			childList: true,
+			subtree: true,
+		});
+		timeoutId = window.setTimeout(finish, options.timeoutMs ?? 3000);
 	}
 }
 
@@ -704,7 +763,12 @@ class CodeDropdownListener {
 			return;
 		}
 
-		this.attachClickListener(codeButton);
+		if (codeButton.getAttribute(DATA_ATTRIBUTES.codeButtonBound) === "true") {
+			return;
+		}
+
+		codeButton.setAttribute(DATA_ATTRIBUTES.codeButtonBound, "true");
+		codeButton.addEventListener("click", () => this.onDropdownOpen());
 	}
 
 	private findCodeButton(): HTMLButtonElement | undefined {
@@ -713,11 +777,15 @@ class CodeDropdownListener {
 		);
 	}
 
-	private attachClickListener(codeButton: HTMLButtonElement): void {
-		codeButton.addEventListener("click", () => {
-			this.attemptInjection();
-			this.setupLocalTabListener();
-		});
+	private onDropdownOpen(): void {
+		DOMObserver.waitForSelector(
+			SELECTORS.cloneMethodList,
+			() => {
+				this.attemptInjection();
+				this.setupLocalTabListener();
+			},
+			{ root: DOMUtils.getOverlayRoot() }
+		);
 	}
 
 	private setupLocalTabListener(): void {
@@ -756,9 +824,13 @@ class CodeDropdownListener {
 
 class VSCodeCloneExtension {
 	private static instance: VSCodeCloneExtension;
-	private observer: MutationObserver | null = null;
-	private debounceTimer: number | null = null;
 	private currentUrl = "";
+	private navigationHandler: (() => void) | null = null;
+	private readonly navigationEvents: { target: EventTarget; type: string }[] = [
+		{ target: window, type: "popstate" },
+		{ target: document, type: "turbo:load" },
+		{ target: document, type: "turbo:render" },
+	];
 
 	static getInstance(): VSCodeCloneExtension {
 		if (!VSCodeCloneExtension.instance) {
@@ -770,7 +842,7 @@ class VSCodeCloneExtension {
 	initialize(): void {
 		this.currentUrl = window.location.href;
 		this.injectIfRepository();
-		this.setupNavigationObserver();
+		this.setupNavigationWatcher();
 	}
 
 	private injectIfRepository(): void {
@@ -782,60 +854,42 @@ class VSCodeCloneExtension {
 		}
 	}
 
-	private setupNavigationObserver(): void {
-		this.observer = new MutationObserver((mutations) => {
-			this.handlePageChange();
+	/**
+	 * GitHub navigates as a single-page app. A content script runs in an
+	 * isolated world and can't intercept the page's own history.pushState, so
+	 * we listen for the navigation events GitHub's Turbo router dispatches on
+	 * the shared document (plus popstate for back/forward) and re-run detection
+	 * only when the URL actually changes.
+	 */
+	private setupNavigationWatcher(): void {
+		const handler = () => this.handleNavigation();
+		this.navigationHandler = handler;
 
-			mutations.forEach((mutation) => {
-				if (mutation.type === "childList") {
-					const addedNodes = Array.from(mutation.addedNodes);
-					const hasDropdownContent = addedNodes.some(
-						(node) =>
-							node instanceof Element &&
-							(node.querySelector('nav[aria-label="Remote URL selector"]') ||
-								node.matches('nav[aria-label="Remote URL selector"]') ||
-								node.textContent?.includes("HTTPS") ||
-								node.textContent?.includes("SSH"))
-					);
-
-					if (hasDropdownContent) {
-						setTimeout(() => {
-							this.injectIfRepository();
-						}, 5);
-					}
-				}
-			});
-		});
-
-		this.observer.observe(document.body, {
-			childList: true,
-			subtree: true,
-		});
+		for (const { target, type } of this.navigationEvents) {
+			target.addEventListener(type, handler);
+		}
 	}
 
-	private handlePageChange(): void {
-		if (this.debounceTimer) {
-			clearTimeout(this.debounceTimer);
+	private handleNavigation(): void {
+		const newUrl = window.location.href;
+		if (newUrl === this.currentUrl) {
+			return;
 		}
 
-		this.debounceTimer = window.setTimeout(() => {
-			const newUrl = window.location.href;
-			if (newUrl !== this.currentUrl) {
-				this.currentUrl = newUrl;
-				this.injectIfRepository();
-			}
-		}, 100);
+		this.currentUrl = newUrl;
+		this.injectIfRepository();
 	}
 
 	destroy(): void {
-		if (this.observer) {
-			this.observer.disconnect();
-			this.observer = null;
+		const handler = this.navigationHandler;
+		if (!handler) {
+			return;
 		}
-		if (this.debounceTimer) {
-			clearTimeout(this.debounceTimer);
-			this.debounceTimer = null;
+
+		for (const { target, type } of this.navigationEvents) {
+			target.removeEventListener(type, handler);
 		}
+		this.navigationHandler = null;
 	}
 }
 
