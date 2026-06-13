@@ -58,7 +58,6 @@ const ELEMENT_IDS = {
 };
 
 const DATA_ATTRIBUTES = {
-	originalContent: "data-original-content",
 	hiddenPanel: "data-vscode-hidden-panel",
 	hidden: "data-vscode-hidden",
 	codeButtonBound: "data-vscode-bound",
@@ -429,13 +428,20 @@ class VSCodePanelManager {
 		const panelContainer = panel.parentElement;
 		if (!panelContainer) return;
 
-		Array.from(panelContainer.children).forEach((child) => {
-			if (child.id === ELEMENT_IDS.vscodePanel) {
-				(child as HTMLElement).style.display = "block";
-			} else {
-				(child as HTMLElement).style.display = "none";
-				child.setAttribute(DATA_ATTRIBUTES.hiddenPanel, "true");
-			}
+		panel.style.display = "block";
+		this.hideContainerChildren(panelContainer);
+	}
+
+	/**
+	 * Hides GitHub's own clone-panel nodes behind our panel with `display: none`
+	 * (tagged for restoration) instead of removing them, so their event
+	 * listeners and node identity survive until another tab is selected.
+	 */
+	private hideContainerChildren(container: Element): void {
+		Array.from(container.children).forEach((child) => {
+			if (child.id === ELEMENT_IDS.vscodePanel) return;
+			(child as HTMLElement).style.display = "none";
+			child.setAttribute(DATA_ATTRIBUTES.hiddenPanel, "true");
 		});
 	}
 
@@ -480,15 +486,7 @@ class VSCodePanelManager {
 
 	private prepareContainer(container: Element): void {
 		new DescriptionTextManager().hide();
-
-		if (!container.hasAttribute(DATA_ATTRIBUTES.originalContent)) {
-			container.setAttribute(
-				DATA_ATTRIBUTES.originalContent,
-				container.innerHTML
-			);
-		}
-
-		container.innerHTML = "";
+		this.hideContainerChildren(container);
 	}
 
 	private createPanel(): HTMLDivElement {
@@ -663,6 +661,12 @@ class TabEventManager {
 		this.restoreOriginalContent();
 	}
 
+	/**
+	 * Removes the panel the extension created and reveals GitHub's original
+	 * nodes by clearing the `display: none` we set when the panel opened. No
+	 * markup is serialized or rewritten, so GitHub's nodes keep their event
+	 * listeners and identity.
+	 */
 	private restoreOriginalContent(): void {
 		const vscodePanel = document.getElementById(ELEMENT_IDS.vscodePanel);
 		if (!vscodePanel) return;
@@ -670,29 +674,10 @@ class TabEventManager {
 		const panelContainer = vscodePanel.parentElement;
 		if (!panelContainer) return;
 
-		if (panelContainer.hasAttribute(DATA_ATTRIBUTES.originalContent)) {
-			this.restoreFromStoredContent(panelContainer);
-		} else {
-			this.restoreByRemoval(panelContainer, vscodePanel);
-		}
-	}
+		(panelContainer as HTMLElement).style.cssText = "";
+		vscodePanel.remove();
 
-	private restoreFromStoredContent(container: Element): void {
-		const originalContent = container.getAttribute(
-			DATA_ATTRIBUTES.originalContent
-		);
-		if (originalContent) {
-			(container as HTMLElement).style.cssText = "";
-			container.innerHTML = originalContent;
-			container.removeAttribute(DATA_ATTRIBUTES.originalContent);
-		}
-	}
-
-	private restoreByRemoval(container: Element, panel: HTMLElement): void {
-		(container as HTMLElement).style.cssText = "";
-		panel.remove();
-
-		Array.from(container.children).forEach((child) => {
+		Array.from(panelContainer.children).forEach((child) => {
 			if (child.hasAttribute(DATA_ATTRIBUTES.hiddenPanel)) {
 				(child as HTMLElement).style.display = "";
 				child.removeAttribute(DATA_ATTRIBUTES.hiddenPanel);
