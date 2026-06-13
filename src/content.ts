@@ -31,10 +31,14 @@ const SELECTORS: ElementSelectors = {
 };
 
 const GITHUB_CLASSES = {
+	// Backstop only. Primer regenerates these hashes on every rebuild, so at
+	// runtime we clone the live "Code" button's classes instead (see
+	// VSCodeButtonCreator.resolveButtonClasses). These values are just the
+	// last-known-good fallback if that lookup ever fails.
 	button: {
-		base: "prc-Button-ButtonBase-c50BI",
-		content: "prc-Button-ButtonContent-HKbr-",
-		label: "prc-Button-Label-pTQ3x",
+		base: "prc-Button-ButtonBase-9n-Xk",
+		content: "prc-Button-ButtonContent-Iohp5",
+		label: "prc-Button-Label-FWkx3",
 	},
 	panel: {
 		container: "Box-sc-g0xbh4-0 iNJnpb d-flex",
@@ -220,9 +224,11 @@ class VSCodeTabCreator {
 
 class VSCodeButtonCreator {
 	private repoInfo: RepositoryInfo;
+	private buttonClasses: { base: string; content: string; label: string };
 
 	constructor(repoInfo: RepositoryInfo) {
 		this.repoInfo = repoInfo;
+		this.buttonClasses = VSCodeButtonCreator.resolveButtonClasses();
 	}
 
 	create(): HTMLButtonElement {
@@ -237,12 +243,55 @@ class VSCodeButtonCreator {
 		return button;
 	}
 
+	/**
+	 * Copy the class names from GitHub's live native primary button (the green
+	 * "Code" button that's open when our panel renders). Primer's CSS-module
+	 * class hashes rotate on every GitHub rebuild, so hardcoding them makes the
+	 * button lose its green styling the next time GitHub ships. Every primary
+	 * Primer button shares the same hashed classes, so cloning from the live DOM
+	 * keeps us green across rotations. Falls back to the last-known hashes.
+	 */
+	private static resolveButtonClasses(): {
+		base: string;
+		content: string;
+		label: string;
+	} {
+		const primaryButtons = Array.from(
+			document.querySelectorAll<HTMLButtonElement>(
+				'button[data-variant="primary"]'
+			)
+		);
+
+		const nativeButton =
+			primaryButtons.find((btn) => btn.querySelector(".octicon-code")) ||
+			primaryButtons.find((btn) => btn.id !== ELEMENT_IDS.vscodeTab) ||
+			primaryButtons[0];
+
+		if (!nativeButton) {
+			return { ...GITHUB_CLASSES.button };
+		}
+
+		const content = nativeButton.querySelector<HTMLElement>(
+			'[data-component="buttonContent"]'
+		);
+		const label = nativeButton.querySelector<HTMLElement>(
+			'[data-component="text"]'
+		);
+
+		return {
+			base: nativeButton.className || GITHUB_CLASSES.button.base,
+			content: content?.className || GITHUB_CLASSES.button.content,
+			label: label?.className || GITHUB_CLASSES.button.label,
+		};
+	}
+
 	private createButton(): HTMLButtonElement {
 		return DOMUtils.createElement(
 			"button",
 			{
+				"data-component": "Button",
 				type: "button",
-				className: GITHUB_CLASSES.button.base,
+				className: this.buttonClasses.base,
 				"data-loading": "false",
 				"data-size": "medium",
 				"data-variant": "primary",
@@ -256,14 +305,14 @@ class VSCodeButtonCreator {
 		return DOMUtils.createElement("span", {
 			"data-component": "buttonContent",
 			"data-align": "center",
-			className: GITHUB_CLASSES.button.content,
+			className: this.buttonClasses.content,
 		});
 	}
 
 	private createButtonLabel(): HTMLSpanElement {
 		return DOMUtils.createElement("span", {
 			"data-component": "text",
-			className: GITHUB_CLASSES.button.label,
+			className: this.buttonClasses.label,
 			textContent: "Clone in VS Code",
 		});
 	}
