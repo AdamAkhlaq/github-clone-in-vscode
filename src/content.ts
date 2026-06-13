@@ -30,6 +30,12 @@ const SELECTORS: ElementSelectors = {
 	],
 };
 
+// The clone UI renders inside a Primer anchored overlay / dialog. Every clone
+// query scopes to this subtree (located via the Remote URL selector nav, the
+// most stable anchor) instead of scanning the whole document.
+const CLONE_OVERLAY_SELECTOR =
+	'[role="dialog"], .prc-Overlay-Overlay-dVyJl, [data-variant="anchored"]';
+
 const GITHUB_CLASSES = {
 	// Backstop only. Primer regenerates these hashes on every rebuild, so at
 	// runtime we clone the live "Code" button's classes instead (see
@@ -96,15 +102,30 @@ class DOMUtils {
 
 	static findElementByText(
 		text: string,
-		containerSelector?: string
+		containerSelector: string,
+		root: ParentNode = document
 	): Element | null {
-		const elements = Array.from(document.querySelectorAll("*"));
-		const targetElement = elements.find(
-			(el) =>
-				el.textContent?.trim() === text &&
-				(containerSelector ? el.closest(containerSelector) : true)
+		const containers = Array.from(root.querySelectorAll(containerSelector));
+		return (
+			containers.find((container) =>
+				Array.from(container.querySelectorAll("*")).some(
+					(el) => el.textContent?.trim() === text
+				)
+			) ?? null
 		);
-		return targetElement?.closest(containerSelector || "*") || null;
+	}
+
+	/**
+	 * Locates the clone overlay (the dialog/anchored container that holds the
+	 * Remote URL selector nav) so callers can scope their queries to it. Returns
+	 * null if the nav has no matching overlay ancestor, leaving callers to fall
+	 * back to the portal root; this never returns an unrelated overlay.
+	 */
+	static findCloneOverlay(): Element | null {
+		const nav = document.querySelector(
+			'nav[aria-label="Remote URL selector"]'
+		);
+		return nav?.closest(CLONE_OVERLAY_SELECTOR) ?? null;
 	}
 
 	/**
@@ -523,10 +544,11 @@ class DescriptionTextManager {
 	];
 
 	hide(): void {
-		const cloneDropdown = this.findCloneDropdown();
+		const scope = DOMUtils.findCloneOverlay() ?? DOMUtils.getOverlayRoot();
+		const cloneDropdown = document.querySelector(CLONE_OVERLAY_SELECTOR);
 
-		this.hideDescriptionElements(cloneDropdown);
-		this.hideSSHLinks(cloneDropdown);
+		this.hideDescriptionElements(scope, cloneDropdown);
+		this.hideSSHLinks(scope, cloneDropdown);
 	}
 
 	show(): void {
@@ -539,14 +561,11 @@ class DescriptionTextManager {
 		});
 	}
 
-	private findCloneDropdown(): Element | null {
-		return document.querySelector(
-			'[role="dialog"], .prc-Overlay-Overlay-dVyJl, [data-variant="anchored"]'
-		);
-	}
-
-	private hideDescriptionElements(cloneDropdown: Element | null): void {
-		const elements = document.querySelectorAll("p, div");
+	private hideDescriptionElements(
+		scope: ParentNode,
+		cloneDropdown: Element | null
+	): void {
+		const elements = scope.querySelectorAll("p, div");
 
 		elements.forEach((element) => {
 			if (cloneDropdown && cloneDropdown.contains(element)) return;
@@ -563,8 +582,11 @@ class DescriptionTextManager {
 		});
 	}
 
-	private hideSSHLinks(cloneDropdown: Element | null): void {
-		const links = document.querySelectorAll("a");
+	private hideSSHLinks(
+		scope: ParentNode,
+		cloneDropdown: Element | null
+	): void {
+		const links = scope.querySelectorAll("a");
 
 		links.forEach((link) => {
 			if (cloneDropdown && cloneDropdown.contains(link)) return;
@@ -705,7 +727,8 @@ class VSCodeButtonInjector {
 		const element = DOMUtils.findElement(SELECTORS.cloneMethodList);
 		if (element) return element;
 
-		return DOMUtils.findElementByText("HTTPS", "ul");
+		const overlay = DOMUtils.findCloneOverlay();
+		return DOMUtils.findElementByText("HTTPS", "ul", overlay ?? document);
 	}
 
 	private tabAlreadyExists(cloneMethodList: Element): boolean {
@@ -771,10 +794,34 @@ class CodeDropdownListener {
 		codeButton.addEventListener("click", () => this.onDropdownOpen());
 	}
 
-	private findCodeButton(): HTMLButtonElement | undefined {
-		return Array.from(document.querySelectorAll("button")).find((btn) =>
-			btn.textContent?.includes("Code")
-		);
+	/**
+	 * GitHub's clone trigger is the primary "Code" button, identified by the code
+	 * octicon it carries. Matching on textContent.includes("Code") instead
+	 * false-matches buttons like "Code review" or "Source code".
+	 */
+	private findCodeButton(): HTMLButtonElement | null {
+		const primaryCodeButton = Array.from(
+			document.querySelectorAll<HTMLButtonElement>(
+				'button[data-variant="primary"]'
+			)
+		).find((btn) => btn.querySelector(".octicon-code"));
+		if (primaryCodeButton) return primaryCodeButton;
+
+		// Fallback for variants where the trigger isn't tagged primary: walk up
+		// from each code octicon to a button whose own label is exactly "Code".
+		const octicons = Array.from(document.querySelectorAll(".octicon-code"));
+		for (const octicon of octicons) {
+			const button = octicon.closest<HTMLButtonElement>("button");
+			if (button && CodeDropdownListener.hasExactCodeLabel(button)) {
+				return button;
+			}
+		}
+		return null;
+	}
+
+	private static hasExactCodeLabel(button: HTMLButtonElement): boolean {
+		const label = button.querySelector('[data-component="text"]');
+		return (label ?? button).textContent?.trim() === "Code";
 	}
 
 	private onDropdownOpen(): void {
