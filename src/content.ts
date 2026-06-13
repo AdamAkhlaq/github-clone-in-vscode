@@ -649,9 +649,7 @@ class TabEventManager {
 			const clickedLink = (e.target as Element).closest("a");
 			if (!clickedLink || clickedLink === this.vscodeLink) return;
 
-			setTimeout(() => {
-				this.handleExistingTabClick(clickedLink as HTMLAnchorElement);
-			}, 10);
+			this.handleExistingTabClick(clickedLink as HTMLAnchorElement);
 		});
 	}
 
@@ -836,16 +834,19 @@ class CodeDropdownListener {
 	}
 
 	private setupLocalTabListener(): void {
-		setTimeout(() => {
-			const localTab = this.findLocalTab();
-			if (localTab) {
-				localTab.addEventListener("click", () => {
-					setTimeout(() => {
-						this.attemptInjection();
-					}, 5);
-				});
-			}
-		}, 10);
+		const localTab = this.findLocalTab();
+		if (!localTab) return;
+
+		// Switching to the Local tab re-renders the clone method list, dropping
+		// our injected tab. Wait for the list to reappear, then inject once;
+		// tabAlreadyExists keeps the inject a no-op if it survived the re-render.
+		localTab.addEventListener("click", () => {
+			DOMObserver.waitForSelector(
+				SELECTORS.cloneMethodList,
+				() => this.attemptInjection(),
+				{ root: DOMUtils.getOverlayRoot() }
+			);
+		});
 	}
 
 	private findLocalTab(): HTMLElement | null {
@@ -860,12 +861,7 @@ class CodeDropdownListener {
 	}
 
 	private attemptInjection(): void {
-		const injector = new VSCodeButtonInjector(this.repoInfo);
-		injector.inject();
-
-		setTimeout(() => {
-			injector.inject();
-		}, 5);
+		new VSCodeButtonInjector(this.repoInfo).inject();
 	}
 }
 
