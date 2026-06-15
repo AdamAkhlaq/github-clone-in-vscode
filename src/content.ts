@@ -396,9 +396,28 @@ class VSCodeButtonCreator {
 		});
 	}
 
+	// GitHub logins are alphanumeric with hyphens; repo names additionally allow
+	// dots and underscores. owner/repo come straight from location.pathname, so a
+	// segment containing `?`, `#`, `&`, or whitespace would break out of the query
+	// and inject parameters into VS Code's protocol handler. Reject anything
+	// outside these sets rather than hand a malformed URL to the handler.
+	private static readonly OWNER_PATTERN = /^[A-Za-z0-9-]+$/;
+	private static readonly REPO_PATTERN = /^[A-Za-z0-9._-]+$/;
+
 	private attachClickHandler(button: HTMLButtonElement): void {
 		button.addEventListener("click", () => {
-			const vscodeUrl = `vscode://vscode.git/clone?url=https://github.com/${this.repoInfo.owner}/${this.repoInfo.repo}.git`;
+			const { owner, repo } = this.repoInfo;
+			if (
+				!VSCodeButtonCreator.OWNER_PATTERN.test(owner) ||
+				!VSCodeButtonCreator.REPO_PATTERN.test(repo)
+			) {
+				return;
+			}
+
+			const cloneUrl = `https://github.com/${encodeURIComponent(
+				owner
+			)}/${encodeURIComponent(repo)}.git`;
+			const vscodeUrl = `vscode://vscode.git/clone?url=${cloneUrl}`;
 			window.open(vscodeUrl, "_blank");
 		});
 	}
