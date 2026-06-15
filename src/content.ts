@@ -1,10 +1,3 @@
-/**
- * GitHub Clone in VS Code - Chromium Browser Extension Content Script
- *
- * This content script adds a "VS Code" tab to GitHub's repository clone dropdown,
- * allowing users to directly clone repositories into VS Code with one click.
- */
-
 import { RepositoryDetector, RepositoryInfo } from "./lib/repository";
 import { buildVscodeCloneUrl } from "./lib/vscode-url";
 
@@ -834,7 +827,6 @@ class CodeDropdownListener {
 	}
 }
 
-// Navigation events setupNavigationWatcher subscribes to (see its comment).
 const NAVIGATION_EVENTS: { target: EventTarget; type: string }[] = [
 	{ target: window, type: "popstate" },
 	{ target: document, type: "turbo:load" },
