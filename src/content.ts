@@ -834,15 +834,16 @@ class CodeDropdownListener {
 	}
 }
 
+// Navigation events setupNavigationWatcher subscribes to (see its comment).
+const NAVIGATION_EVENTS: { target: EventTarget; type: string }[] = [
+	{ target: window, type: "popstate" },
+	{ target: document, type: "turbo:load" },
+	{ target: document, type: "turbo:render" },
+];
+
 class VSCodeCloneExtension {
 	private static instance: VSCodeCloneExtension;
 	private currentUrl = "";
-	private navigationHandler: (() => void) | null = null;
-	private readonly navigationEvents: { target: EventTarget; type: string }[] = [
-		{ target: window, type: "popstate" },
-		{ target: document, type: "turbo:load" },
-		{ target: document, type: "turbo:render" },
-	];
 
 	static getInstance(): VSCodeCloneExtension {
 		if (!VSCodeCloneExtension.instance) {
@@ -875,9 +876,7 @@ class VSCodeCloneExtension {
 	 */
 	private setupNavigationWatcher(): void {
 		const handler = () => this.handleNavigation();
-		this.navigationHandler = handler;
-
-		for (const { target, type } of this.navigationEvents) {
+		for (const { target, type } of NAVIGATION_EVENTS) {
 			target.addEventListener(type, handler);
 		}
 	}
@@ -891,31 +890,12 @@ class VSCodeCloneExtension {
 		this.currentUrl = newUrl;
 		this.injectIfRepository();
 	}
-
-	destroy(): void {
-		const handler = this.navigationHandler;
-		if (!handler) {
-			return;
-		}
-
-		for (const { target, type } of this.navigationEvents) {
-			target.removeEventListener(type, handler);
-		}
-		this.navigationHandler = null;
-	}
 }
+
+const start = () => VSCodeCloneExtension.getInstance().initialize();
 
 if (document.readyState === "loading") {
-	document.addEventListener("DOMContentLoaded", () => {
-		const extension = VSCodeCloneExtension.getInstance();
-		extension.initialize();
-	});
+	document.addEventListener("DOMContentLoaded", start);
 } else {
-	const extension = VSCodeCloneExtension.getInstance();
-	extension.initialize();
+	start();
 }
-
-window.addEventListener("beforeunload", () => {
-	const extension = VSCodeCloneExtension.getInstance();
-	extension.destroy();
-});
