@@ -1,5 +1,6 @@
 import { RepositoryDetector, RepositoryInfo } from "./lib/repository";
-import { buildCloneUrl } from "./lib/clone-url";
+import { buildArchiveUrl, buildCloneUrl } from "./lib/clone-url";
+import { detectBranch } from "./lib/branch";
 import {
 	CloneTarget,
 	DEFAULT_TARGET_ID,
@@ -67,20 +68,35 @@ const DATA_ATTRIBUTES = {
 	codeButtonBound: "data-clone-bound",
 };
 
-// The editor the user has chosen to clone into. Starts as the first registered
-// target (VS Code) and is replaced once the persisted choice loads from storage,
-// then kept current by watchSelectedTargetId so a selection made in the popup
-// takes effect on the open page. Read live wherever a label or deep link is
+// The destination the user has chosen to clone to. Starts as the default target
+// (the .zip download) and is replaced once the persisted choice loads from
+// storage, then kept current by watchSelectedTargetId so a selection made in the
+// popup takes effect on the open page. Read live wherever a label or URL is
 // built so the injected UI always reflects the active choice.
 let activeTarget: CloneTarget = getCloneTarget(DEFAULT_TARGET_ID);
 
 // All wording shown in the injected UI, derived from a target in one place so
 // the tab, its aria-label, the button, and the description stay in sync. Both
 // the element creators and relabelInjectedUI read from here, so a wording tweak
-// (or the trailing period on the description) can't drift between them.
+// (or the trailing period on the description) can't drift between them. The
+// archive target gets download wording ("Download …") instead of the editors'
+// clone wording, since it produces a file rather than opening an editor.
 function cloneLabels(target: CloneTarget) {
+	// The tab keeps the bare target label for every kind; only the longer
+	// aria/button/description wording differs (clone handoff vs. file download).
+	const tab = target.label;
+
+	if (target.kind === "archive") {
+		return {
+			tab,
+			aria: "Download repository as a .zip",
+			button: "Download .zip",
+			description: "Download the current branch as a .zip archive.",
+		};
+	}
+
 	return {
-		tab: target.label,
+		tab,
 		aria: `Clone with ${target.label}`,
 		button: `Clone in ${target.label}`,
 		description: `Clone using ${target.label}.`,
@@ -428,21 +444,56 @@ class CloneButtonCreator {
 	}
 
 	private attachClickHandler(button: HTMLButtonElement): void {
-		button.addEventListener("click", () => {
-			const { owner, repo } = this.repoInfo;
-			// Read the active target at click time so the deep link always matches
-			// the current choice, even if it changed since the panel was built.
-			const cloneUrl = buildCloneUrl(activeTarget.urlScheme, owner, repo);
-			if (!cloneUrl) {
-				return;
-			}
-
-			// Prefer location.href over window.open(_blank): the external scheme
-			// hands off to the OS without navigating GitHub away, and avoids the
-			// dangling blank tab _blank can leave behind.
-			window.location.href = cloneUrl;
-		});
+		// Read the active target at click time so the action always matches the
+		// current choice, even if it changed since the panel was built.
+		button.addEventListener("click", () =>
+			activateClone(activeTarget, this.repoInfo)
+		);
 	}
+}
+
+/**
+ * Performs the chosen action for `target`: an editor gets a clone deep-link
+ * handoff; the archive target downloads a .zip of the branch the page is
+ * showing. Both URLs are built (and validated) from the live repo info at call
+ * time, so a malformed owner/repo simply no-ops rather than firing a bad link.
+ */
+function activateClone(target: CloneTarget, repoInfo: RepositoryInfo): void {
+	const { owner, repo } = repoInfo;
+
+	if (target.kind === "archive") {
+		const archiveUrl = buildArchiveUrl(owner, repo, detectBranch());
+		if (archiveUrl) {
+			downloadArchive(archiveUrl);
+		}
+		return;
+	}
+
+	const cloneUrl = buildCloneUrl(target.urlScheme, owner, repo);
+	if (cloneUrl) {
+		// Prefer location.href over window.open(_blank): the external scheme hands
+		// off to the OS without navigating GitHub away, and avoids the dangling
+		// blank tab _blank can leave behind.
+		window.location.href = cloneUrl;
+	}
+}
+
+/**
+ * Starts the .zip download without navigating GitHub away. The archive lives on
+ * github.com (same origin as this content script), so a programmatic anchor
+ * with the `download` attribute downloads rather than navigates; GitHub then
+ * 302s to codeload, whose `Content-Disposition: attachment` carries the proper
+ * `repo-<branch>.zip` filename. The element is appended only long enough to be
+ * clicked (some browsers require it in the document) and removed immediately.
+ */
+function downloadArchive(url: string): void {
+	const link = document.createElement("a");
+	link.href = url;
+	link.download = "";
+	link.rel = "noopener";
+	document.body.appendChild(link);
+	link.click();
+	link.remove();
 }
 
 class ClonePanelManager {

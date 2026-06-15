@@ -55,19 +55,20 @@
 
 				<h1 class="popup__title">GitHub Clone in VS Code</h1>
 				<p class="popup__tagline">
-					Clone any GitHub repository straight into your editor — one click, no
-					terminal.
+					Clone any GitHub repository straight into your editor — or grab it as
+					a .zip — one click, no terminal.
 				</p>
 			</header>
 
 			<section class="popup__section">
 				<span class="popup__label" id="clone-target-label"
-					>Open cloned repos in</span
+					>Clone destination</span
 				>
-				<!-- Editor choices are injected by popup.js from the shared
+				<!-- Destination choices are injected by popup.js from the shared
 				     CLONE_TARGETS list (src/lib/clone-targets.ts) as a radiogroup, so
 				     the targets live in one typed place and each row carries its own
-				     brand icon. Kept empty here; populated on load. -->
+				     brand icon (or the .zip folder). Kept empty here; populated on
+				     load. -->
 				<div
 					class="popup__options"
 					id="clone-target"

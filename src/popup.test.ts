@@ -72,7 +72,7 @@ describe("popup target picker", () => {
 			'[role="radio"][aria-checked="true"]'
 		);
 		expect(checked.length).toBe(1);
-		expect((checked[0] as HTMLElement).dataset.id).toBe("vscode");
+		expect((checked[0] as HTMLElement).dataset.id).toBe("zip");
 		expect(
 			document.getElementById("clone-target-tile")?.querySelector("svg")
 		).not.toBeNull();
@@ -90,5 +90,23 @@ describe("popup target picker", () => {
 
 		expect(cursor.getAttribute("aria-checked")).toBe("true");
 		expect(storage.read()).toBe("cursor");
+	});
+
+	it("offers the .zip target as a selectable, persistable row", async () => {
+		await import("./popup");
+		await flush();
+
+		const zip = document.getElementById(
+			"clone-target-option-zip"
+		) as HTMLElement;
+		expect(zip).not.toBeNull();
+		// The archive row carries the folder glyph like any other target's icon.
+		expect(zip.querySelector("svg path")).not.toBeNull();
+
+		zip.click();
+		await flush();
+
+		expect(zip.getAttribute("aria-checked")).toBe("true");
+		expect(storage.read()).toBe("zip");
 	});
 });

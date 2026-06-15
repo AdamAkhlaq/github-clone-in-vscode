@@ -1,11 +1,14 @@
-// Single source of truth for the editors the extension can clone into. Every
-// target listed here is a VS Code build (or a VS Code fork) that bundles the
-// same built-in Git extension, so they all clone through an identically shaped
-// deep link — only the URL scheme differs (see `urlScheme` and clone-url.ts).
+// Single source of truth for the destinations the extension can clone a repo
+// to. Most targets are a VS Code build (or a VS Code fork) that bundles the
+// same built-in Git extension, so they clone through an identically shaped deep
+// link — only the URL scheme differs (see `urlScheme` and clone-url.ts). The
+// odd one out is the archive target, which downloads the repo as a .zip with no
+// editor at all; the `kind` discriminant tells the two apart.
 //
-// Adding a new editor is one entry in CLONE_TARGETS: the popup builds its
+// Adding a destination is one entry in CLONE_TARGETS: the popup builds its
 // selector from this array and the content script builds its button/tab/URL
-// from the user's choice, so no other file needs to change.
+// (and chooses deep-link vs. download) from the user's choice, so no other file
+// needs to change.
 
 // A monochrome brand glyph, rendered as a single SVG `<path>` filled with the
 // target's brand colour. Kept as raw path data (not an asset file) so it ships
@@ -21,15 +24,14 @@ export interface CloneTargetIcon {
 	fillRule?: "evenodd" | "nonzero";
 }
 
-export interface CloneTarget {
+// Fields every target shares regardless of `kind`. Kept separate so the
+// editor/archive variants only declare what's unique to them.
+interface CloneTargetBase {
 	// Stable identifier persisted as the user's choice and emitted by the popup.
 	id: string;
 	// Human-facing label shown in the popup and woven into the injected
-	// button/tab text ("Clone in <label>").
+	// button/tab text (see cloneLabels in content.ts).
 	label: string;
-	// Full base of the editor's clone deep link, e.g. `cursor://vscode.git/clone`.
-	// clone-url.ts appends the validated `?url=…` query to this.
-	urlScheme: string;
 	// Brand glyph for the popup's selector and header tile.
 	icon: CloneTargetIcon;
 	// Brand colour for the glyph. Omit it to render the mark in the popup's
@@ -41,6 +43,22 @@ export interface CloneTarget {
 	colorDark?: string;
 }
 
+// A VS Code-family editor: clicking hands the repo off via a clone deep link.
+export interface EditorTarget extends CloneTargetBase {
+	kind: "editor";
+	// Full base of the editor's clone deep link, e.g. `cursor://vscode.git/clone`.
+	// clone-url.ts appends the validated `?url=…` query to this.
+	urlScheme: string;
+}
+
+// The .zip option: clicking downloads a GitHub source archive — no editor, no
+// deep link, so it carries no urlScheme (see buildArchiveUrl in clone-url.ts).
+export interface ArchiveTarget extends CloneTargetBase {
+	kind: "archive";
+}
+
+export type CloneTarget = EditorTarget | ArchiveTarget;
+
 // The official VS Code mark (the blue ribbon). Shared by VS Code and its
 // Insiders build, which is the same logo recoloured green.
 const VSCODE_ICON: CloneTargetIcon = {
@@ -49,12 +67,35 @@ const VSCODE_ICON: CloneTargetIcon = {
 	fillRule: "evenodd",
 };
 
+// A classic tabbed folder silhouette for the .zip download target — the one
+// non-editor option, so it gets a generic file-system mark rather than a brand
+// logo. Authored as a single filled path in the same 24×24 box as the brand
+// glyphs and rendered in folder yellow (see the archive entry's colours).
+const FOLDER_ICON: CloneTargetIcon = {
+	viewBox: "0 0 24 24",
+	path: "M10 4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6z",
+};
+
 // ── Clone-target registry ────────────────────────────────────────────────────
 // Array order is the order shown in the popup. The default selection is keyed by
 // DEFAULT_TARGET_ID (below), not by position, so this list can be reordered
-// freely without changing which editor is pre-selected.
+// freely without changing which target is pre-selected.
 export const CLONE_TARGETS: CloneTarget[] = [
 	{
+		// The one non-editor destination: a direct GitHub source archive download.
+		// Listed first and set as the default (DEFAULT_TARGET_ID) so it leads the
+		// popup and is pre-selected.
+		kind: "archive",
+		id: "zip",
+		label: ".zip",
+		icon: FOLDER_ICON,
+		// Classic folder yellow, nudged brighter in dark mode for legibility on
+		// the near-black canvas.
+		color: "#F4B400",
+		colorDark: "#F8C84E",
+	},
+	{
+		kind: "editor",
 		id: "cursor",
 		label: "Cursor",
 		urlScheme: "cursor://vscode.git/clone",
@@ -66,6 +107,7 @@ export const CLONE_TARGETS: CloneTarget[] = [
 		// popup's adaptive foreground (currentColor) — legible on both canvases.
 	},
 	{
+		kind: "editor",
 		id: "vscode",
 		label: "VS Code",
 		urlScheme: "vscode://vscode.git/clone",
@@ -74,6 +116,7 @@ export const CLONE_TARGETS: CloneTarget[] = [
 		colorDark: "#3FA7F4",
 	},
 	{
+		kind: "editor",
 		id: "windsurf",
 		label: "Windsurf",
 		urlScheme: "windsurf://vscode.git/clone",
@@ -85,6 +128,7 @@ export const CLONE_TARGETS: CloneTarget[] = [
 		// the adaptive foreground too.
 	},
 	{
+		kind: "editor",
 		id: "vscodium",
 		label: "VSCodium",
 		urlScheme: "vscodium://vscode.git/clone",
@@ -96,6 +140,7 @@ export const CLONE_TARGETS: CloneTarget[] = [
 		colorDark: "#5C9DF5",
 	},
 	{
+		kind: "editor",
 		id: "vscode-insiders",
 		label: "VS Code Insiders",
 		urlScheme: "vscode-insiders://vscode.git/clone",
@@ -107,12 +152,12 @@ export const CLONE_TARGETS: CloneTarget[] = [
 
 // The target assumed when nothing is stored yet, and the fallback whenever a
 // persisted id no longer matches a known target.
-export const DEFAULT_TARGET_ID = "vscode";
+export const DEFAULT_TARGET_ID = "zip";
 
 /**
  * Resolves a stored id to its CloneTarget, falling back to the default target
- * (VS Code) for unknown, missing, or stale ids so callers always get a usable
- * target without their own null handling.
+ * (the .zip download) for unknown, missing, or stale ids so callers always get
+ * a usable target without their own null handling.
  */
 export function getCloneTarget(id: string | null | undefined): CloneTarget {
 	return (

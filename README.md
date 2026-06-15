@@ -40,6 +40,7 @@ This Chrome extension seamlessly integrates with GitHub's interface by adding a 
 
 - 🎯 **One-click cloning** - Instantly clone and open repositories in your editor
 - 🧩 **Choose your editor** - VS Code, VS Code Insiders, VSCodium, Cursor, or Windsurf, set from the toolbar popup
+- 📁 **Or download a .zip** - Pick the `.zip` destination to grab a source archive of the current branch — no editor needed
 - 🔗 **Native GitHub integration** - Blends perfectly with GitHub's existing UI
 - ⚡ **Lightweight & Fast** - Minimal permissions, maximum performance
 - 🚫 **No popup clutter** - Clean button injection without intrusive UI
@@ -62,9 +63,11 @@ This Chrome extension seamlessly integrates with GitHub's interface by adding a 
 
 The extension generates a deep link your editor recognizes and handles automatically — for example `vscode://vscode.git/clone?url=https://github.com/owner/repo.git`, or `cursor://…` / `windsurf://…` depending on the editor you picked.
 
-### Choosing your editor
+### Choosing your destination
 
-Click the extension's toolbar icon to open the popup and pick your editor — VS Code, VS Code Insiders, VSCodium, Cursor, or Windsurf. Your choice is remembered, and the button on GitHub updates to match. All of these are VS Code-family editors, so they share the same `…/vscode.git/clone` deep link and only differ by URL scheme.
+Click the extension's toolbar icon to open the popup and pick where repos go — VS Code, VS Code Insiders, VSCodium, Cursor, or Windsurf. Your choice is remembered, and the button on GitHub updates to match. All of these are VS Code-family editors, so they share the same `…/vscode.git/clone` deep link and only differ by URL scheme.
+
+Prefer the source files without an editor? Pick the **`.zip`** destination and the button becomes **"Download .zip"**, fetching GitHub's archive of the branch you're viewing (`…/archive/refs/heads/<branch>.zip`, falling back to `…/archive/HEAD.zip` for the default branch).
 
 ---
 
@@ -92,7 +95,7 @@ Click the extension's toolbar icon to open the popup and pick your editor — VS
 - **Architecture**: Lightweight content script injection
 - **Permissions**: Minimal - `*://github.com/*` host permission and `storage` (to remember your chosen editor)
 - **Compatibility**: All Chromium-based browsers (Chrome, Edge, Brave, etc.)
-- **Editor Support**: VS Code, VS Code Insiders, VSCodium, Cursor, and Windsurf — pick yours from the toolbar popup
+- **Editor Support**: VS Code, VS Code Insiders, VSCodium, Cursor, and Windsurf — pick yours from the toolbar popup, or choose `.zip` to download a source archive instead
 
 ### Browser Compatibility
 

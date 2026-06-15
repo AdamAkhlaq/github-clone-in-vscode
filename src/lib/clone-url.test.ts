@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { buildCloneUrl } from "./clone-url";
-import { CLONE_TARGETS } from "./clone-targets";
+import { buildArchiveUrl, buildCloneUrl } from "./clone-url";
+import { CLONE_TARGETS, EditorTarget } from "./clone-targets";
 
 const VSCODE_SCHEME = "vscode://vscode.git/clone";
+
+const EDITOR_TARGETS = CLONE_TARGETS.filter(
+	(target): target is EditorTarget => target.kind === "editor"
+);
 
 describe("buildCloneUrl", () => {
 	it("builds the deep link for a normal owner/repo", () => {
@@ -30,8 +34,8 @@ describe("buildCloneUrl", () => {
 		);
 	});
 
-	it("builds a valid link for every registered clone target", () => {
-		for (const target of CLONE_TARGETS) {
+	it("builds a valid link for every registered editor target", () => {
+		for (const target of EDITOR_TARGETS) {
 			expect(buildCloneUrl(target.urlScheme, "facebook", "react")).toBe(
 				`${target.urlScheme}?url=https://github.com/facebook/react.git`
 			);
@@ -47,5 +51,52 @@ describe("buildCloneUrl", () => {
 		["dot in owner", "face.book", "react"],
 	])("returns null for %s", (_label, owner, repo) => {
 		expect(buildCloneUrl(VSCODE_SCHEME, owner, repo)).toBeNull();
+	});
+});
+
+describe("buildArchiveUrl", () => {
+	it("targets a named branch with the ref-archive form", () => {
+		expect(buildArchiveUrl("facebook", "react", "main")).toBe(
+			"https://github.com/facebook/react/archive/refs/heads/main.zip"
+		);
+	});
+
+	it.each([
+		["no branch", undefined],
+		["null branch", null],
+		["empty branch", ""],
+		["whitespace-only branch", "   "],
+		["branch with whitespace", "feature x"],
+	])("falls back to HEAD for %s", (_label, branch) => {
+		expect(buildArchiveUrl("facebook", "react", branch)).toBe(
+			"https://github.com/facebook/react/archive/HEAD.zip"
+		);
+	});
+
+	it("keeps the slashes in a nested ref but escapes each segment", () => {
+		expect(buildArchiveUrl("my-org", "repo", "release/v2.0")).toBe(
+			"https://github.com/my-org/repo/archive/refs/heads/release/v2.0.zip"
+		);
+	});
+
+	it("escapes reserved characters in a branch segment", () => {
+		expect(buildArchiveUrl("my-org", "repo", "fix#42")).toBe(
+			"https://github.com/my-org/repo/archive/refs/heads/fix%2342.zip"
+		);
+	});
+
+	it("trims surrounding whitespace before using the branch", () => {
+		expect(buildArchiveUrl("facebook", "react", "  main  ")).toBe(
+			"https://github.com/facebook/react/archive/refs/heads/main.zip"
+		);
+	});
+
+	it.each([
+		["empty owner", "", "react"],
+		["empty repo", "facebook", ""],
+		["slash in owner", "face/book", "react"],
+		["dot in owner", "face.book", "react"],
+	])("returns null for %s", (_label, owner, repo) => {
+		expect(buildArchiveUrl(owner, repo, "main")).toBeNull();
 	});
 });
