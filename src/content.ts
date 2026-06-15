@@ -418,7 +418,10 @@ class VSCodeButtonCreator {
 				owner
 			)}/${encodeURIComponent(repo)}.git`;
 			const vscodeUrl = `vscode://vscode.git/clone?url=${cloneUrl}`;
-			window.open(vscodeUrl, "_blank");
+			// Prefer location.href over window.open(_blank): the external scheme
+			// hands off to the OS without navigating GitHub away, and avoids the
+			// dangling blank tab _blank can leave behind.
+			window.location.href = vscodeUrl;
 		});
 	}
 }
