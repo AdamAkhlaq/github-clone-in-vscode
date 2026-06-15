@@ -77,12 +77,15 @@ class DOMUtils {
 		const element = document.createElement(tagName);
 
 		Object.entries(attributes).forEach(([key, value]) => {
+			// className and textContent need their typed properties; every other
+			// key is a reflected attribute, so setAttribute sets it without the
+			// unsafe cast property access would require.
 			if (key === "className") {
 				element.className = value;
-			} else if (key.startsWith("data-")) {
-				element.setAttribute(key, value);
+			} else if (key === "textContent") {
+				element.textContent = value;
 			} else {
-				(element as Record<string, string>)[key] = value;
+				element.setAttribute(key, value);
 			}
 		});
 
