@@ -1,5 +1,11 @@
 import { RepositoryDetector, RepositoryInfo } from "./lib/repository";
-import { buildVscodeCloneUrl } from "./lib/vscode-url";
+import { buildCloneUrl } from "./lib/clone-url";
+import {
+	CloneTarget,
+	DEFAULT_TARGET_ID,
+	getCloneTarget,
+} from "./lib/clone-targets";
+import { loadSelectedTargetId, watchSelectedTargetId } from "./lib/storage";
 
 interface ElementSelectors {
 	cloneMethodList: string[];
@@ -7,7 +13,7 @@ interface ElementSelectors {
 }
 
 // Class names cloned from GitHub's existing clone-method tabs so our injected
-// "VS Code" tab visually matches the native ones (see VSCodeTabCreator).
+// editor tab visually matches the native ones (see CloneTabCreator).
 interface TabClassNames {
 	listItem: string;
 	link: string;
@@ -37,7 +43,7 @@ const CLONE_OVERLAY_SELECTOR =
 const GITHUB_CLASSES = {
 	// Backstop only. Primer regenerates these hashes on every rebuild, so at
 	// runtime we clone the live "Code" button's classes instead (see
-	// VSCodeButtonCreator.resolveButtonClasses). These values are just the
+	// CloneButtonCreator.resolveButtonClasses). These values are just the
 	// last-known-good fallback if that lookup ever fails.
 	button: {
 		base: "prc-Button-ButtonBase-9n-Xk",
@@ -51,15 +57,35 @@ const GITHUB_CLASSES = {
 };
 
 const ELEMENT_IDS = {
-	vscodeTab: "vscode-tab",
-	vscodePanel: "vscode-panel",
+	cloneTab: "clone-target-tab",
+	clonePanel: "clone-target-panel",
 };
 
 const DATA_ATTRIBUTES = {
-	hiddenPanel: "data-vscode-hidden-panel",
-	hidden: "data-vscode-hidden",
-	codeButtonBound: "data-vscode-bound",
+	hiddenPanel: "data-clone-hidden-panel",
+	hidden: "data-clone-hidden",
+	codeButtonBound: "data-clone-bound",
 };
+
+// The editor the user has chosen to clone into. Starts as the first registered
+// target (VS Code) and is replaced once the persisted choice loads from storage,
+// then kept current by watchSelectedTargetId so a selection made in the popup
+// takes effect on the open page. Read live wherever a label or deep link is
+// built so the injected UI always reflects the active choice.
+let activeTarget: CloneTarget = getCloneTarget(DEFAULT_TARGET_ID);
+
+// All wording shown in the injected UI, derived from a target in one place so
+// the tab, its aria-label, the button, and the description stay in sync. Both
+// the element creators and relabelInjectedUI read from here, so a wording tweak
+// (or the trailing period on the description) can't drift between them.
+function cloneLabels(target: CloneTarget) {
+	return {
+		tab: target.label,
+		aria: `Clone with ${target.label}`,
+		button: `Clone in ${target.label}`,
+		description: `Clone using ${target.label}.`,
+	};
+}
 
 class DOMUtils {
 	static createElement<K extends keyof HTMLElementTagNameMap>(
@@ -143,6 +169,38 @@ class DOMUtils {
 }
 
 /**
+ * Repoints an already-injected tab/panel at the current target after the stored
+ * choice loads or later changes in the popup, so the selection is reflected on
+ * a page whose clone dropdown was already opened. A no-op when nothing is
+ * injected yet — fresh injections read the active target directly.
+ */
+function relabelInjectedUI(): void {
+	const labels = cloneLabels(activeTarget);
+
+	const tab = document.getElementById(ELEMENT_IDS.cloneTab);
+	if (tab) {
+		const span = tab.querySelector('span[data-component="text"]');
+		if (span) {
+			span.textContent = labels.tab;
+			span.setAttribute("data-content", labels.tab);
+		}
+		tab.querySelector("a")?.setAttribute("aria-label", labels.aria);
+	}
+
+	const panel = document.getElementById(ELEMENT_IDS.clonePanel);
+	if (panel) {
+		const buttonLabel = panel.querySelector('button [data-component="text"]');
+		if (buttonLabel) {
+			buttonLabel.textContent = labels.button;
+		}
+		const description = panel.querySelector("p");
+		if (description) {
+			description.textContent = labels.description;
+		}
+	}
+}
+
+/**
  * Waits for an element matching one of `selectors` to appear, then invokes
  * `onFound` once. The observer is scoped to `root`, matches by selector only
  * (it never reads textContent), and disconnects the moment the element is
@@ -185,7 +243,7 @@ class DOMObserver {
 	}
 }
 
-class VSCodeTabCreator {
+class CloneTabCreator {
 	private repoInfo: RepositoryInfo;
 
 	constructor(repoInfo: RepositoryInfo) {
@@ -222,7 +280,7 @@ class VSCodeTabCreator {
 	private createListItem(classes: TabClassNames): HTMLLIElement {
 		return DOMUtils.createElement("li", {
 			className: classes.listItem,
-			id: ELEMENT_IDS.vscodeTab,
+			id: ELEMENT_IDS.cloneTab,
 		});
 	}
 
@@ -230,15 +288,16 @@ class VSCodeTabCreator {
 		return DOMUtils.createElement("a", {
 			className: classes.link,
 			href: "#",
-			"aria-label": "Clone with VS Code",
+			"aria-label": cloneLabels(activeTarget).aria,
 		});
 	}
 
 	private createTabSpan(classes: TabClassNames): HTMLSpanElement {
+		const { tab } = cloneLabels(activeTarget);
 		const attributes: Record<string, string> = {
 			"data-component": "text",
-			"data-content": "VS Code",
-			textContent: "VS Code",
+			"data-content": tab,
+			textContent: tab,
 		};
 
 		if (classes.span) {
@@ -268,18 +327,18 @@ class VSCodeTabCreator {
 
 		link.setAttribute("aria-current", "page");
 
-		const panelManager = new VSCodePanelManager(this.repoInfo);
+		const panelManager = new ClonePanelManager(this.repoInfo);
 		panelManager.show();
 	}
 }
 
-class VSCodeButtonCreator {
+class CloneButtonCreator {
 	private repoInfo: RepositoryInfo;
 	private buttonClasses: { base: string; content: string; label: string };
 
 	constructor(repoInfo: RepositoryInfo) {
 		this.repoInfo = repoInfo;
-		this.buttonClasses = VSCodeButtonCreator.resolveButtonClasses();
+		this.buttonClasses = CloneButtonCreator.resolveButtonClasses();
 	}
 
 	create(): HTMLButtonElement {
@@ -315,7 +374,7 @@ class VSCodeButtonCreator {
 
 		const nativeButton =
 			primaryButtons.find((btn) => btn.querySelector(".octicon-code")) ||
-			primaryButtons.find((btn) => btn.id !== ELEMENT_IDS.vscodeTab) ||
+			primaryButtons.find((btn) => btn.id !== ELEMENT_IDS.cloneTab) ||
 			primaryButtons[0];
 
 		if (!nativeButton) {
@@ -364,27 +423,29 @@ class VSCodeButtonCreator {
 		return DOMUtils.createElement("span", {
 			"data-component": "text",
 			className: this.buttonClasses.label,
-			textContent: "Clone in VS Code",
+			textContent: cloneLabels(activeTarget).button,
 		});
 	}
 
 	private attachClickHandler(button: HTMLButtonElement): void {
 		button.addEventListener("click", () => {
 			const { owner, repo } = this.repoInfo;
-			const vscodeUrl = buildVscodeCloneUrl(owner, repo);
-			if (!vscodeUrl) {
+			// Read the active target at click time so the deep link always matches
+			// the current choice, even if it changed since the panel was built.
+			const cloneUrl = buildCloneUrl(activeTarget.urlScheme, owner, repo);
+			if (!cloneUrl) {
 				return;
 			}
 
 			// Prefer location.href over window.open(_blank): the external scheme
 			// hands off to the OS without navigating GitHub away, and avoids the
 			// dangling blank tab _blank can leave behind.
-			window.location.href = vscodeUrl;
+			window.location.href = cloneUrl;
 		});
 	}
 }
 
-class VSCodePanelManager {
+class ClonePanelManager {
 	private repoInfo: RepositoryInfo;
 
 	constructor(repoInfo: RepositoryInfo) {
@@ -393,7 +454,7 @@ class VSCodePanelManager {
 
 	show(): void {
 		const existingPanel = document.getElementById(
-			ELEMENT_IDS.vscodePanel
+			ELEMENT_IDS.clonePanel
 		) as HTMLElement;
 
 		if (existingPanel) {
@@ -419,7 +480,7 @@ class VSCodePanelManager {
 	 */
 	private hideContainerChildren(container: Element): void {
 		Array.from(container.children).forEach((child) => {
-			if (child.id === ELEMENT_IDS.vscodePanel) return;
+			if (child.id === ELEMENT_IDS.clonePanel) return;
 			(child as HTMLElement).style.display = "none";
 			child.setAttribute(DATA_ATTRIBUTES.hiddenPanel, "true");
 		});
@@ -473,7 +534,7 @@ class VSCodePanelManager {
 		const panel = DOMUtils.createElement(
 			"div",
 			{
-				id: ELEMENT_IDS.vscodePanel,
+				id: ELEMENT_IDS.clonePanel,
 				role: "tabpanel",
 				className: GITHUB_CLASSES.panel.container,
 			},
@@ -484,7 +545,7 @@ class VSCodePanelManager {
 			}
 		);
 
-		const button = new VSCodeButtonCreator(this.repoInfo).create();
+		const button = new CloneButtonCreator(this.repoInfo).create();
 		const description = this.createDescription();
 
 		panel.appendChild(button);
@@ -498,7 +559,7 @@ class VSCodePanelManager {
 			"p",
 			{
 				className: GITHUB_CLASSES.panel.description,
-				textContent: "Clone using VS Code.",
+				textContent: cloneLabels(activeTarget).description,
 			},
 			{ "margin-bottom": "0" }
 		);
@@ -608,11 +669,11 @@ class DescriptionTextManager {
 }
 
 class TabEventManager {
-	private vscodeLink: HTMLAnchorElement;
+	private cloneLink: HTMLAnchorElement;
 	private cloneMethodList: Element;
 
-	constructor(vscodeLink: HTMLAnchorElement, cloneMethodList: Element) {
-		this.vscodeLink = vscodeLink;
+	constructor(cloneLink: HTMLAnchorElement, cloneMethodList: Element) {
+		this.cloneLink = cloneLink;
 		this.cloneMethodList = cloneMethodList;
 	}
 
@@ -622,7 +683,7 @@ class TabEventManager {
 
 		nav.addEventListener("click", (e) => {
 			const clickedLink = (e.target as Element).closest("a");
-			if (!clickedLink || clickedLink === this.vscodeLink) return;
+			if (!clickedLink || clickedLink === this.cloneLink) return;
 
 			this.handleExistingTabClick(clickedLink as HTMLAnchorElement);
 		});
@@ -645,14 +706,14 @@ class TabEventManager {
 	 * listeners and identity.
 	 */
 	private restoreOriginalContent(): void {
-		const vscodePanel = document.getElementById(ELEMENT_IDS.vscodePanel);
-		if (!vscodePanel) return;
+		const clonePanel = document.getElementById(ELEMENT_IDS.clonePanel);
+		if (!clonePanel) return;
 
-		const panelContainer = vscodePanel.parentElement;
+		const panelContainer = clonePanel.parentElement;
 		if (!panelContainer) return;
 
 		(panelContainer as HTMLElement).style.cssText = "";
-		vscodePanel.remove();
+		clonePanel.remove();
 
 		Array.from(panelContainer.children).forEach((child) => {
 			if (child.hasAttribute(DATA_ATTRIBUTES.hiddenPanel)) {
@@ -663,7 +724,7 @@ class TabEventManager {
 	}
 }
 
-class VSCodeButtonInjector {
+class CloneButtonInjector {
 	private repoInfo: RepositoryInfo;
 
 	constructor(repoInfo: RepositoryInfo) {
@@ -692,44 +753,44 @@ class VSCodeButtonInjector {
 	}
 
 	private tabAlreadyExists(cloneMethodList: Element): boolean {
-		return !!cloneMethodList.querySelector(`#${ELEMENT_IDS.vscodeTab}`);
+		return !!cloneMethodList.querySelector(`#${ELEMENT_IDS.cloneTab}`);
 	}
 
 	private createAndInsertTab(cloneMethodList: Element): void {
-		const tabCreator = new VSCodeTabCreator(this.repoInfo);
-		const vscodeTab = tabCreator.create(cloneMethodList);
-		const vscodeLink = vscodeTab.querySelector("a") as HTMLAnchorElement;
+		const tabCreator = new CloneTabCreator(this.repoInfo);
+		const cloneTab = tabCreator.create(cloneMethodList);
+		const cloneLink = cloneTab.querySelector("a") as HTMLAnchorElement;
 
-		const eventManager = new TabEventManager(vscodeLink, cloneMethodList);
+		const eventManager = new TabEventManager(cloneLink, cloneMethodList);
 		eventManager.attachExistingTabListeners();
 
-		this.insertTab(cloneMethodList, vscodeTab);
-		this.setAsDefaultTab(cloneMethodList, vscodeLink);
+		this.insertTab(cloneMethodList, cloneTab);
+		this.setAsDefaultTab(cloneMethodList, cloneLink);
 
-		const panelManager = new VSCodePanelManager(this.repoInfo);
+		const panelManager = new ClonePanelManager(this.repoInfo);
 		panelManager.show();
 	}
 
-	private insertTab(cloneMethodList: Element, vscodeTab: HTMLLIElement): void {
+	private insertTab(cloneMethodList: Element, cloneTab: HTMLLIElement): void {
 		const firstListItem = cloneMethodList.querySelector("li");
 		if (firstListItem) {
-			cloneMethodList.insertBefore(vscodeTab, firstListItem);
+			cloneMethodList.insertBefore(cloneTab, firstListItem);
 		} else {
-			cloneMethodList.appendChild(vscodeTab);
+			cloneMethodList.appendChild(cloneTab);
 		}
 	}
 
 	private setAsDefaultTab(
 		cloneMethodList: Element,
-		vscodeLink: HTMLAnchorElement
+		cloneLink: HTMLAnchorElement
 	): void {
 		cloneMethodList.querySelectorAll("a").forEach((link) => {
-			if (link !== vscodeLink) {
+			if (link !== cloneLink) {
 				link.removeAttribute("aria-current");
 			}
 		});
 
-		vscodeLink.setAttribute("aria-current", "page");
+		cloneLink.setAttribute("aria-current", "page");
 	}
 }
 
@@ -823,7 +884,7 @@ class CodeDropdownListener {
 	}
 
 	private attemptInjection(): void {
-		new VSCodeButtonInjector(this.repoInfo).inject();
+		new CloneButtonInjector(this.repoInfo).inject();
 	}
 }
 
@@ -833,21 +894,39 @@ const NAVIGATION_EVENTS: { target: EventTarget; type: string }[] = [
 	{ target: document, type: "turbo:render" },
 ];
 
-class VSCodeCloneExtension {
-	private static instance: VSCodeCloneExtension;
+class CloneExtension {
+	private static instance: CloneExtension;
 	private currentUrl = "";
 
-	static getInstance(): VSCodeCloneExtension {
-		if (!VSCodeCloneExtension.instance) {
-			VSCodeCloneExtension.instance = new VSCodeCloneExtension();
+	static getInstance(): CloneExtension {
+		if (!CloneExtension.instance) {
+			CloneExtension.instance = new CloneExtension();
 		}
-		return VSCodeCloneExtension.instance;
+		return CloneExtension.instance;
 	}
 
 	initialize(): void {
 		this.currentUrl = window.location.href;
+		this.loadTargetPreference();
 		this.injectIfRepository();
 		this.setupNavigationWatcher();
+	}
+
+	/**
+	 * Loads the persisted clone target into `activeTarget` and keeps it current.
+	 * Runs async: injection and the default VS Code labelling don't block on it,
+	 * and once the choice resolves (or later changes in the popup) any already-
+	 * injected UI is relabelled in place.
+	 */
+	private loadTargetPreference(): void {
+		void loadSelectedTargetId().then((id) => {
+			activeTarget = getCloneTarget(id);
+			relabelInjectedUI();
+		});
+		watchSelectedTargetId((id) => {
+			activeTarget = getCloneTarget(id);
+			relabelInjectedUI();
+		});
 	}
 
 	private injectIfRepository(): void {
@@ -884,7 +963,7 @@ class VSCodeCloneExtension {
 	}
 }
 
-const start = () => VSCodeCloneExtension.getInstance().initialize();
+const start = () => CloneExtension.getInstance().initialize();
 
 if (document.readyState === "loading") {
 	document.addEventListener("DOMContentLoaded", start);

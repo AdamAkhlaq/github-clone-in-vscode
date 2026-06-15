@@ -24,10 +24,10 @@
 		ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
 		"Liberation Mono", monospace;
 
-	/* Select chevron shape only — it's used as a mask, so the visible colour
-	   comes from the masked element (a token), not from this data URI. The
-	   stroke colour here is arbitrary; one shape serves both themes. */
-	--gh-chevron: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='12'%20height='12'%20viewBox='0%200%2012%2012'%3E%3Cpath%20d='M2.5%204.5%206%208l3.5-3.5'%20fill='none'%20stroke='%23000'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E");
+	/* Selected-row check shape only — used as a mask, so the visible colour comes
+	   from the masked element (the accent token), not this data URI. The stroke
+	   colour here is arbitrary; one shape serves both themes. */
+	--gh-check: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='13'%20height='13'%20viewBox='0%200%2013%2013'%3E%3Cpath%20d='M2.5%207%205.5%2010l5-6.5'%20fill='none'%20stroke='%23000'%20stroke-width='1.6'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 @media (prefers-color-scheme: dark) {
@@ -109,14 +109,11 @@ body {
 	height: 20px;
 }
 
-/* GitHub mark in the foreground colour; VS Code mark in the accent. Both SVGs
-   fill with currentColor, so the tile's color drives the glyph. */
+/* The source GitHub mark fills with currentColor, so the tile's color drives
+   the glyph. The destination tile is filled by popup.js with the selected
+   editor's glyph in its own brand colour, so it needs no color here. */
 .popup__tile--source {
 	color: var(--gh-fg-default);
-}
-
-.popup__tile--target {
-	color: var(--gh-accent);
 }
 
 /* A short black arrow joins the two tiles — one glyph: a thick foreground shaft
@@ -153,49 +150,76 @@ body {
 	color: var(--gh-fg-muted);
 }
 
-.popup__select {
-	width: 100%;
-	padding: 7px 30px 7px 10px;
-	appearance: none;
-	-webkit-appearance: none;
-	border: 1px solid var(--gh-border-default);
+/* Every editor is shown at once (a radiogroup), not hidden behind a dropdown:
+   the list is short, each row carries a brand icon, and an always-open list
+   can't be clipped by the popup's auto-sized viewport. */
+.popup__options {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.popup__option {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 7px 9px;
+	border: 1px solid transparent;
 	border-radius: 7px;
-	background-color: var(--gh-canvas-subtle);
-	color: var(--gh-fg-default);
-	font-family: inherit;
 	font-size: 13px;
 	cursor: pointer;
+	/* The brand glyphs vary in width; the trailing check is fixed-width so the
+	   labels still align across rows. */
+	user-select: none;
 }
 
-/* Chevron lives on the wrapper as a masked element, so its colour is the muted
-   token (correct in both themes automatically) and a single shape replaces the
-   per-theme data URIs the OS control's arrow would otherwise need. */
-.popup__select-wrap {
-	position: relative;
+.popup__option:hover {
+	background-color: var(--gh-canvas-subtle);
 }
 
-.popup__select-wrap::after {
-	content: "";
-	position: absolute;
-	top: 50%;
-	right: 11px;
-	width: 12px;
-	height: 12px;
-	transform: translateY(-50%);
-	pointer-events: none;
-	background-color: var(--gh-fg-muted);
-	-webkit-mask: var(--gh-chevron) center / 12px 12px no-repeat;
-	mask: var(--gh-chevron) center / 12px 12px no-repeat;
+.popup__option[aria-checked="true"] {
+	background-color: var(--gh-canvas-subtle);
+	border-color: var(--gh-border-default);
 }
 
-.popup__select:hover {
-	border-color: var(--gh-fg-muted);
-}
-
-.popup__select:focus-visible {
+.popup__option:focus-visible {
 	outline: 2px solid var(--gh-accent);
 	outline-offset: 1px;
-	border-color: var(--gh-accent);
+}
+
+.popup__option-icon {
+	display: inline-flex;
+	flex-shrink: 0;
+	width: 18px;
+	height: 18px;
+}
+
+.popup__option-icon svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.popup__option-label {
+	flex: 1;
+}
+
+/* Checkmark on the selected row — masked so its colour is the accent token in
+   both themes. Hidden (zero opacity) on unselected rows so every row keeps the
+   same height and the labels never shift. */
+.popup__option::after {
+	content: "";
+	flex-shrink: 0;
+	width: 13px;
+	height: 13px;
+	background-color: var(--gh-accent);
+	-webkit-mask: var(--gh-check) center / 13px 13px no-repeat;
+	mask: var(--gh-check) center / 13px 13px no-repeat;
+	opacity: 0;
+}
+
+.popup__option[aria-checked="true"]::after {
+	opacity: 1;
 }
 
 /* ── Footer: source + store links ─────────────────────────────────────────── */

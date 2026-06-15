@@ -38,7 +38,8 @@ This Chrome extension seamlessly integrates with GitHub's interface by adding a 
 
 ### ✨ Key Features
 
-- 🎯 **One-click cloning** - Instantly clone and open repositories in VS Code
+- 🎯 **One-click cloning** - Instantly clone and open repositories in your editor
+- 🧩 **Choose your editor** - VS Code, VS Code Insiders, VSCodium, Cursor, or Windsurf, set from the toolbar popup
 - 🔗 **Native GitHub integration** - Blends perfectly with GitHub's existing UI
 - ⚡ **Lightweight & Fast** - Minimal permissions, maximum performance
 - 🚫 **No popup clutter** - Clean button injection without intrusive UI
@@ -55,11 +56,15 @@ This Chrome extension seamlessly integrates with GitHub's interface by adding a 
 
    ![Code Dropdown](.github/images/dropdown.png)
 
-3. **See "Clone in VS Code" as the first option** in the dropdown menu
-4. **Click it** and VS Code opens with the clone dialog ready!
+3. **See "Clone in …" as the first option** in the dropdown menu (named for your chosen editor)
+4. **Click it** and your editor opens with the clone dialog ready!
 5. **Start coding immediately** - No manual URL copying or terminal commands needed
 
-The extension generates a `vscode://vscode.git/clone?url=https://github.com/owner/repo.git` URL that VS Code recognizes and handles automatically.
+The extension generates a deep link your editor recognizes and handles automatically — for example `vscode://vscode.git/clone?url=https://github.com/owner/repo.git`, or `cursor://…` / `windsurf://…` depending on the editor you picked.
+
+### Choosing your editor
+
+Click the extension's toolbar icon to open the popup and pick your editor — VS Code, VS Code Insiders, VSCodium, Cursor, or Windsurf. Your choice is remembered, and the button on GitHub updates to match. All of these are VS Code-family editors, so they share the same `…/vscode.git/clone` deep link and only differ by URL scheme.
 
 ---
 
@@ -85,9 +90,9 @@ The extension generates a `vscode://vscode.git/clone?url=https://github.com/owne
 
 - **Framework**: TypeScript with Chrome Manifest V3
 - **Architecture**: Lightweight content script injection
-- **Permissions**: Minimal - only `*://github.com/*` host permission
+- **Permissions**: Minimal - `*://github.com/*` host permission and `storage` (to remember your chosen editor)
 - **Compatibility**: All Chromium-based browsers (Chrome, Edge, Brave, etc.)
-- **VS Code Support**: Works with VS Code, VS Code Insiders, and compatible editors
+- **Editor Support**: VS Code, VS Code Insiders, VSCodium, Cursor, and Windsurf — pick yours from the toolbar popup
 
 ### Browser Compatibility
 

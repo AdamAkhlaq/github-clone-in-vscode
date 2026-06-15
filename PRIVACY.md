@@ -1,6 +1,6 @@
 # Privacy Policy for GitHub Clone in VS Code
 
-Last updated: **July 22, 2025**
+Last updated: **June 15, 2026**
 
 ## Overview
 
@@ -14,9 +14,13 @@ The Extension:
 
 - ✅ Does NOT collect any personal data
 - ✅ Does NOT track user behavior
-- ✅ Does NOT store any information locally or remotely
 - ✅ Does NOT transmit any data to external servers
 - ✅ Does NOT use analytics or tracking services
+
+The only thing the Extension stores is a single preference — **which editor you
+chose to clone into** (e.g. VS Code, Cursor). It is saved through the browser's
+own extension storage so your choice is remembered and can sync across your
+signed-in browsers. It contains no personal data and is never sent to us.
 
 ## Permissions Used
 
@@ -24,17 +28,23 @@ The Extension requests minimal permissions:
 
 ### Host Permission: `*://github.com/*`
 
-- **Purpose**: Required to inject the "Clone in VS Code" button on GitHub pages
+- **Purpose**: Required to inject the clone button on GitHub pages
 - **Scope**: Only active on GitHub.com domains
 - **Data Access**: None - we only modify the visual interface
+
+### `storage`
+
+- **Purpose**: Remember which editor you chose to clone into
+- **Scope**: A single preference value, stored by the browser
+- **Data Access**: None - it holds only your editor choice, no personal data
 
 ## How It Works
 
 1. When you visit a GitHub repository page, the Extension:
 
    - Detects you're on a GitHub repository page
-   - Adds a "Clone in VS Code" button to the existing Code dropdown
-   - Generates a `vscode://` URL when clicked
+   - Adds a "Clone in …" button (for your chosen editor) to the Code dropdown
+   - Generates the editor's clone URL (e.g. `vscode://`, `cursor://`) when clicked
 
 2. The Extension does NOT:
    - Read repository content
@@ -63,4 +73,4 @@ Under various privacy laws (GDPR, CCPA, etc.), since we don't collect any person
 
 ---
 
-**In summary**: This extension is designed with privacy in mind - we don't collect, store, or transmit any of your data.
+**In summary**: This extension is designed with privacy in mind - we don't collect or transmit any of your data. The only thing it stores is your chosen editor, kept locally by the browser.
