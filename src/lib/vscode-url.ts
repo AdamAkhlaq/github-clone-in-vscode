@@ -1,5 +1,9 @@
 import { OWNER_PATTERN, REPO_PATTERN } from "./github-names";
 
+// Base of VS Code's clone deep link; the `?url=…` query is appended below. Shared
+// with the popup's clone-target list (clone-targets.ts) so the scheme lives once.
+export const VSCODE_CLONE_SCHEME = "vscode://vscode.git/clone";
+
 // owner/repo come straight from location.pathname, so a segment containing `?`,
 // `#`, `&`, or whitespace would break out of the query and inject parameters
 // into VS Code's protocol handler. Reject anything outside GitHub's name charset
@@ -22,5 +26,5 @@ export function buildVscodeCloneUrl(
 	const cloneUrl = `https://github.com/${encodeURIComponent(
 		owner
 	)}/${encodeURIComponent(repo)}.git`;
-	return `vscode://vscode.git/clone?url=${cloneUrl}`;
+	return `${VSCODE_CLONE_SCHEME}?url=${cloneUrl}`;
 }

@@ -4,8 +4,8 @@
 	"description": "A simple Chrome extension that adds a 'Clone in VS Code' button to GitHub repositories for seamless one-click cloning.",
 	"main": "dist/content.js",
 	"scripts": {
-		"bundle": "esbuild src/content.ts --bundle --format=iife --target=es2020 --outfile=dist/content.js",
-		"build": "npm run bundle && cp manifest.json dist/ && cp -r icons dist/",
+		"bundle": "esbuild src/content.ts src/popup.ts --bundle --format=iife --target=es2020 --outdir=dist",
+		"build": "npm run bundle && cp manifest.json popup.html popup.css dist/ && cp -r icons dist/",
 		"dev": "npm run bundle -- --watch",
 		"clean": "rm -rf dist",
 		"package": "npm run build && cd dist && zip -r ../github-clone-in-vscode-v1.0.0.zip .",

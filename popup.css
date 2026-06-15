@@ -1,0 +1,247 @@
+/*
+ * Popup styling. Sits over GitHub, so it borrows Primer's neutral canvas and
+ * adapts with prefers-color-scheme — but the single accent is VS Code's own
+ * link blue rather than Primer's, because the destination is what this
+ * extension is about. No remote CSS or fonts: the sans stack mirrors GitHub's
+ * and the control label uses the system monospace stack (the developer voice).
+ */
+
+:root {
+	color-scheme: light dark;
+
+	--gh-canvas-default: #ffffff;
+	--gh-canvas-subtle: #f6f8fa;
+	--gh-fg-default: #1f2328;
+	--gh-fg-muted: #59636e;
+	--gh-border-default: #d1d9e0;
+	/* VS Code "Light+" text-link blue — the destination editor's own accent. */
+	--gh-accent: #0067c0;
+
+	--gh-font-sans:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica,
+		Arial, sans-serif;
+	--gh-font-mono:
+		ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+		"Liberation Mono", monospace;
+
+	/* Select chevron shape only — it's used as a mask, so the visible colour
+	   comes from the masked element (a token), not from this data URI. The
+	   stroke colour here is arbitrary; one shape serves both themes. */
+	--gh-chevron: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='12'%20height='12'%20viewBox='0%200%2012%2012'%3E%3Cpath%20d='M2.5%204.5%206%208l3.5-3.5'%20fill='none'%20stroke='%23000'%20stroke-width='1.5'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--gh-canvas-default: #0d1117;
+		--gh-canvas-subtle: #161b22;
+		--gh-fg-default: #e6edf3;
+		--gh-fg-muted: #9198a1;
+		--gh-border-default: #30363d;
+		/* VS Code "Dark+" text-link blue. */
+		--gh-accent: #3794ff;
+	}
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+}
+
+/* Holds the reusable <symbol> sprite; never rendered, only referenced by <use>. */
+.popup__defs {
+	display: none;
+}
+
+.popup {
+	width: 320px;
+	padding: 18px 18px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	background-color: var(--gh-canvas-default);
+	color: var(--gh-fg-default);
+	font-family: var(--gh-font-sans);
+	font-size: 14px;
+	line-height: 1.5;
+	/* One quiet on-open moment; disabled under reduced-motion below. */
+	animation: popup-in 180ms ease-out both;
+}
+
+@keyframes popup-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/* ── Header: the GitHub → VS Code handoff ─────────────────────────────────── */
+
+.popup__handoff {
+	display: flex;
+	align-items: center;
+	/* Centre the GitHub → VS Code cluster horizontally in the popup. */
+	justify-content: center;
+	gap: 8px;
+	margin-bottom: 14px;
+}
+
+.popup__tile {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	border: 1px solid var(--gh-border-default);
+	border-radius: 8px;
+	background-color: var(--gh-canvas-subtle);
+}
+
+.popup__tile svg {
+	display: block;
+	width: 20px;
+	height: 20px;
+}
+
+/* GitHub mark in the foreground colour; VS Code mark in the accent. Both SVGs
+   fill with currentColor, so the tile's color drives the glyph. */
+.popup__tile--source {
+	color: var(--gh-fg-default);
+}
+
+.popup__tile--target {
+	color: var(--gh-accent);
+}
+
+/* A short black arrow joins the two tiles — one glyph: a thick foreground shaft
+   (black in light mode, white in dark) into a matching arrowhead. The fixed
+   length keeps VS Code close to GitHub rather than spanning the popup width. */
+.popup__flow {
+	stroke: var(--gh-fg-default);
+}
+
+.popup__title {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.popup__tagline {
+	margin: 5px 0 0;
+	font-size: 12.5px;
+	line-height: 1.45;
+	color: var(--gh-fg-muted);
+}
+
+/* ── Section: clone-target selector ───────────────────────────────────────── */
+
+.popup__label {
+	display: block;
+	margin: 0 0 7px;
+	font-family: var(--gh-font-mono);
+	font-size: 10.5px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--gh-fg-muted);
+}
+
+.popup__select {
+	width: 100%;
+	padding: 7px 30px 7px 10px;
+	appearance: none;
+	-webkit-appearance: none;
+	border: 1px solid var(--gh-border-default);
+	border-radius: 7px;
+	background-color: var(--gh-canvas-subtle);
+	color: var(--gh-fg-default);
+	font-family: inherit;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+/* Chevron lives on the wrapper as a masked element, so its colour is the muted
+   token (correct in both themes automatically) and a single shape replaces the
+   per-theme data URIs the OS control's arrow would otherwise need. */
+.popup__select-wrap {
+	position: relative;
+}
+
+.popup__select-wrap::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	right: 11px;
+	width: 12px;
+	height: 12px;
+	transform: translateY(-50%);
+	pointer-events: none;
+	background-color: var(--gh-fg-muted);
+	-webkit-mask: var(--gh-chevron) center / 12px 12px no-repeat;
+	mask: var(--gh-chevron) center / 12px 12px no-repeat;
+}
+
+.popup__select:hover {
+	border-color: var(--gh-fg-muted);
+}
+
+.popup__select:focus-visible {
+	outline: 2px solid var(--gh-accent);
+	outline-offset: 1px;
+	border-color: var(--gh-accent);
+}
+
+/* ── Footer: source + store links ─────────────────────────────────────────── */
+
+.popup__footer {
+	display: flex;
+	gap: 16px;
+	padding-top: 14px;
+	border-top: 1px solid var(--gh-border-default);
+}
+
+.popup__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	/* Smaller than the body text and non-wrapping so both links sit on one line. */
+	font-size: 12px;
+	font-weight: 500;
+	white-space: nowrap;
+	color: var(--gh-accent);
+	text-decoration: none;
+}
+
+.popup__link-icon {
+	flex-shrink: 0;
+}
+
+/* The GitHub mark is monochrome: render it in the foreground colour rather than
+   the accent. The Chrome logo carries its own colours, so it ignores this. */
+.popup__link-icon--github {
+	color: var(--gh-fg-default);
+}
+
+/* Underline only the label on hover; the leading icon isn't part of the text. */
+.popup__link:hover span {
+	text-decoration: underline;
+}
+
+.popup__link:focus-visible {
+	outline: 2px solid var(--gh-accent);
+	outline-offset: 2px;
+	border-radius: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.popup {
+		animation: none;
+	}
+}
