@@ -1,0 +1,6 @@
+dist/
+node_modules/
+icons/
+coverage/
+*.png
+package-lock.json

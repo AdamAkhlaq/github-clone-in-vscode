@@ -4,11 +4,16 @@
 	"description": "A simple Chrome extension that adds a 'Clone in VS Code' button to GitHub repositories for seamless one-click cloning.",
 	"main": "dist/content.js",
 	"scripts": {
-		"build": "tsc && cp manifest.json dist/ && cp -r icons dist/",
-		"dev": "tsc --watch",
+		"bundle": "esbuild src/content.ts --bundle --format=iife --target=es2020 --outfile=dist/content.js",
+		"build": "npm run bundle && cp manifest.json dist/ && cp -r icons dist/",
+		"dev": "npm run bundle -- --watch",
 		"clean": "rm -rf dist",
 		"package": "npm run build && cd dist && zip -r ../github-clone-in-vscode-v1.0.0.zip .",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"lint": "eslint .",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"format": "prettier --write \"src/**/*.ts\"",
+		"format:check": "prettier --check \"src/**/*.ts\""
 	},
 	"keywords": [
 		"chrome-extension",
@@ -20,7 +25,16 @@
 	"author": "AdamAkhlaq",
 	"license": "MIT",
 	"devDependencies": {
+		"@eslint/js": "^10.0.1",
 		"@types/chrome": "^0.1.1",
-		"typescript": "^5.8.3"
+		"esbuild": "^0.28.1",
+		"eslint": "^10.5.0",
+		"eslint-config-prettier": "^10.1.8",
+		"globals": "^17.6.0",
+		"jsdom": "^29.1.1",
+		"prettier": "^3.8.4",
+		"typescript": "^5.8.3",
+		"typescript-eslint": "^8.61.0",
+		"vitest": "^4.1.9"
 	}
 }

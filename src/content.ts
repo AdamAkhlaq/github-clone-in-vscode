@@ -5,15 +5,20 @@
  * allowing users to directly clone repositories into VS Code with one click.
  */
 
-interface RepositoryInfo {
-	owner: string;
-	repo: string;
-	isRepository: boolean;
-}
+import { RepositoryDetector, RepositoryInfo } from "./lib/repository";
+import { buildVscodeCloneUrl } from "./lib/vscode-url";
 
 interface ElementSelectors {
 	cloneMethodList: string[];
 	panelContainer: string[];
+}
+
+// Class names cloned from GitHub's existing clone-method tabs so our injected
+// "VS Code" tab visually matches the native ones (see VSCodeTabCreator).
+interface TabClassNames {
+	listItem: string;
+	link: string;
+	span: string;
 }
 
 const SELECTORS: ElementSelectors = {
@@ -77,7 +82,7 @@ class DOMUtils {
 			} else if (key.startsWith("data-")) {
 				element.setAttribute(key, value);
 			} else {
-				(element as any)[key] = value;
+				(element as Record<string, string>)[key] = value;
 			}
 		});
 
@@ -121,9 +126,7 @@ class DOMUtils {
 	 * back to the portal root; this never returns an unrelated overlay.
 	 */
 	static findCloneOverlay(): Element | null {
-		const nav = document.querySelector(
-			'nav[aria-label="Remote URL selector"]'
-		);
+		const nav = document.querySelector('nav[aria-label="Remote URL selector"]');
 		return nav?.closest(CLONE_OVERLAY_SELECTOR) ?? null;
 	}
 
@@ -186,33 +189,6 @@ class DOMObserver {
 	}
 }
 
-class RepositoryDetector {
-	static detect(): RepositoryInfo {
-		const url = window.location.href;
-		const pathname = window.location.pathname;
-
-		if (!url.includes("github.com")) {
-			return { owner: "", repo: "", isRepository: false };
-		}
-
-		const pathSegments = pathname.slice(1).split("/");
-		if (pathSegments.length < 2) {
-			return { owner: "", repo: "", isRepository: false };
-		}
-
-		const [owner, repo] = pathSegments;
-		const excludedPaths = ["orgs", "users", "settings", "notifications"];
-
-		const isRepository =
-			pathSegments.length >= 2 &&
-			repo !== "" &&
-			!repo.includes("?") &&
-			!excludedPaths.includes(owner);
-
-		return { owner, repo, isRepository };
-	}
-}
-
 class VSCodeTabCreator {
 	private repoInfo: RepositoryInfo;
 
@@ -233,7 +209,7 @@ class VSCodeTabCreator {
 		return listItem;
 	}
 
-	private extractExistingClasses(cloneMethodList: Element) {
+	private extractExistingClasses(cloneMethodList: Element): TabClassNames {
 		return {
 			listItem:
 				cloneMethodList.querySelector("li")?.className ||
@@ -247,14 +223,14 @@ class VSCodeTabCreator {
 		};
 	}
 
-	private createListItem(classes: any): HTMLLIElement {
+	private createListItem(classes: TabClassNames): HTMLLIElement {
 		return DOMUtils.createElement("li", {
 			className: classes.listItem,
 			id: ELEMENT_IDS.vscodeTab,
 		});
 	}
 
-	private createTabLink(classes: any): HTMLAnchorElement {
+	private createTabLink(classes: TabClassNames): HTMLAnchorElement {
 		return DOMUtils.createElement("a", {
 			className: classes.link,
 			href: "#",
@@ -262,7 +238,7 @@ class VSCodeTabCreator {
 		});
 	}
 
-	private createTabSpan(classes: any): HTMLSpanElement {
+	private createTabSpan(classes: TabClassNames): HTMLSpanElement {
 		const attributes: Record<string, string> = {
 			"data-component": "text",
 			"data-content": "VS Code",
@@ -396,28 +372,14 @@ class VSCodeButtonCreator {
 		});
 	}
 
-	// GitHub logins are alphanumeric with hyphens; repo names additionally allow
-	// dots and underscores. owner/repo come straight from location.pathname, so a
-	// segment containing `?`, `#`, `&`, or whitespace would break out of the query
-	// and inject parameters into VS Code's protocol handler. Reject anything
-	// outside these sets rather than hand a malformed URL to the handler.
-	private static readonly OWNER_PATTERN = /^[A-Za-z0-9-]+$/;
-	private static readonly REPO_PATTERN = /^[A-Za-z0-9._-]+$/;
-
 	private attachClickHandler(button: HTMLButtonElement): void {
 		button.addEventListener("click", () => {
 			const { owner, repo } = this.repoInfo;
-			if (
-				!VSCodeButtonCreator.OWNER_PATTERN.test(owner) ||
-				!VSCodeButtonCreator.REPO_PATTERN.test(repo)
-			) {
+			const vscodeUrl = buildVscodeCloneUrl(owner, repo);
+			if (!vscodeUrl) {
 				return;
 			}
 
-			const cloneUrl = `https://github.com/${encodeURIComponent(
-				owner
-			)}/${encodeURIComponent(repo)}.git`;
-			const vscodeUrl = `vscode://vscode.git/clone?url=${cloneUrl}`;
 			// Prefer location.href over window.open(_blank): the external scheme
 			// hands off to the OS without navigating GitHub away, and avoids the
 			// dangling blank tab _blank can leave behind.
@@ -602,10 +564,7 @@ class DescriptionTextManager {
 		});
 	}
 
-	private hideSSHLinks(
-		scope: ParentNode,
-		cloneDropdown: Element | null
-	): void {
+	private hideSSHLinks(scope: ParentNode, cloneDropdown: Element | null): void {
 		const links = scope.querySelectorAll("a");
 
 		links.forEach((link) => {
