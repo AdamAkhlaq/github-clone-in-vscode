@@ -1,10 +1,9 @@
-// GitHub logins are alphanumeric with hyphens; repo names additionally allow
-// dots and underscores. owner/repo come straight from location.pathname, so a
-// segment containing `?`, `#`, `&`, or whitespace would break out of the query
-// and inject parameters into VS Code's protocol handler. Reject anything outside
-// these sets rather than hand a malformed URL to the handler.
-export const OWNER_PATTERN = /^[A-Za-z0-9-]+$/;
-export const REPO_PATTERN = /^[A-Za-z0-9._-]+$/;
+import { OWNER_PATTERN, REPO_PATTERN } from "./github-names";
+
+// owner/repo come straight from location.pathname, so a segment containing `?`,
+// `#`, `&`, or whitespace would break out of the query and inject parameters
+// into VS Code's protocol handler. Reject anything outside GitHub's name charset
+// rather than hand a malformed URL to the handler.
 
 /**
  * Builds the `vscode://vscode.git/clone` deep link for an owner/repo pair, or
