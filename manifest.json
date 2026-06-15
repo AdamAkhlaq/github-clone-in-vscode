@@ -4,11 +4,9 @@
 	"version": "1.0.0",
 	"description": "Adds a 'Clone in VS Code' button to GitHub repositories as if it were a native feature for instant one-click cloning.",
 
-	"host_permissions": ["*://github.com/*"],
-
 	"content_scripts": [
 		{
-			"matches": ["*://github.com/*/*"],
+			"matches": ["https://github.com/*/*"],
 			"js": ["content.js"],
 			"run_at": "document_end"
 		}
