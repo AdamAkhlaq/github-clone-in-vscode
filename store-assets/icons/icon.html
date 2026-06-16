@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<style>
+			* { box-sizing: border-box; }
+			html, body { margin: 0; background: transparent; }
+			.stage {
+				width: 128px; height: 128px; display: flex;
+				align-items: center; justify-content: center; background: transparent;
+			}
+			/* White tile that nearly fills the frame, with a thick black outline. */
+			.tile {
+				width: 122px; height: 122px; border-radius: 28px;
+				background: #ffffff;
+				border: 5px solid #1f2328;
+				display: flex; align-items: center; justify-content: center;
+			}
+			.tile svg { width: 92px; height: 92px; }
+		</style>
+	</head>
+	<body>
+		<div class="stage">
+			<div class="tile">
+				<!-- Source-control / git-branch mark: a branch diverging from a trunk,
+				     the gesture of cloning a repo off into a place of its own. Nodes
+				     are hollow rings. -->
+				<svg viewBox="0 0 64 64" aria-hidden="true">
+					<g
+						fill="none"
+						stroke="#1f2328"
+						stroke-width="6"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<line x1="21" y1="21" x2="21" y2="43" />
+						<path d="M44 21 C44 31 32 33 23.5 33" />
+						<circle cx="21" cy="14.5" r="6" fill="#ffffff" />
+						<circle cx="21" cy="49.5" r="6" fill="#ffffff" />
+						<circle cx="44" cy="14.5" r="6" fill="#ffffff" />
+					</g>
+				</svg>
+			</div>
+		</div>
+	</body>
+</html>

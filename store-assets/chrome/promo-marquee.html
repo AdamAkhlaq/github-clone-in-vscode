@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<style>
+			/* Light studio palette — GitHub Primer light tokens, so the dropdown
+			   mock reads as the real thing. No third-party editor logos or names. */
+			:root {
+				--bg: #ffffff;
+				--subtle: #f6f8fa;
+				--border: #d1d9e0;
+				--border-soft: #e4e8ed;
+				--fg: #1f2328;
+				--muted: #59636e;
+				--faint: #818b98;
+				--green: #1f883d;
+				--orange: #fd8c73;
+				--sans:
+					"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI",
+					sans-serif;
+				--mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+			}
+			* { box-sizing: border-box; }
+			html, body { margin: 0; }
+			.stage {
+				position: relative;
+				width: 1400px;
+				height: 560px;
+				overflow: hidden;
+				background: radial-gradient(1100px 680px at 72% 26%, #ffffff 0%, #eef1f5 100%);
+				font-family: var(--sans);
+				color: var(--fg);
+				display: flex;
+				align-items: center;
+			}
+
+			/* ── Left: the pitch ──────────────────────────────────────────── */
+			.left {
+				width: 648px;
+				flex-shrink: 0;
+				padding: 0 28px 0 84px;
+			}
+			.eyebrow {
+				font-family: var(--mono);
+				font-size: 13px;
+				letter-spacing: 0.22em;
+				text-transform: uppercase;
+				color: var(--muted);
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				margin-bottom: 22px;
+			}
+			.eyebrow .chrome { width: 17px; height: 17px; display: block; }
+			/* icon sits to the left of the name, vertically centred with it */
+			.lockup {
+				display: flex;
+				align-items: center;
+				gap: 22px;
+				margin-bottom: 26px;
+			}
+			.appicon {
+				width: 88px;
+				height: 88px;
+				flex-shrink: 0;
+				border-radius: 20px;
+				background: #ffffff;
+				border: 4px solid #1f2328;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.appicon svg { width: 64px; height: 64px; }
+			h1 {
+				margin: 0;
+				font-size: 52px;
+				font-weight: 800;
+				line-height: 1;
+				letter-spacing: -0.025em;
+			}
+			h1 .anywhere {
+				background: linear-gradient(95deg, #1f6feb, #0fae96);
+				-webkit-background-clip: text;
+				background-clip: text;
+				color: transparent;
+			}
+			h1 .for {
+				display: block; font-weight: 650; color: var(--muted);
+				font-size: 33px; letter-spacing: -0.02em; margin-top: 2px;
+			}
+			.tagline {
+				margin: 0;
+				max-width: 468px;
+				font-size: 18px;
+				line-height: 1.5;
+				color: #424a53;
+			}
+			.dests { display: flex; gap: 10px; margin-top: 26px; }
+			.pill {
+				display: inline-flex; align-items: center; gap: 8px;
+				padding: 8px 14px 8px 11px;
+				background: #ffffff; border: 1px solid var(--border); border-radius: 999px;
+				font-size: 13.5px; font-weight: 550; color: #424a53;
+				box-shadow: 0 1px 2px rgba(31, 35, 40, 0.05);
+			}
+			.pill svg { width: 17px; height: 17px; color: #1f6feb; }
+
+			/* ── Right: the real Code dropdown with the .zip tab the ext adds ─ */
+			.right { flex: 1; display: flex; align-items: center; justify-content: center; }
+			.source { width: 340px; transform: scale(1.07); transform-origin: center; }
+			.code-btn {
+				display: inline-flex; align-items: center; gap: 7px;
+				background: var(--green); color: #fff; font-size: 15px; font-weight: 600;
+				padding: 9px 13px; border-radius: 7px; box-shadow: 0 1px 2px rgba(31, 35, 40, 0.2);
+			}
+			.code-btn svg { width: 16px; height: 16px; fill: #fff; }
+			.code-btn .caret {
+				width: 0; height: 0; margin-left: 3px;
+				border-left: 4px solid transparent; border-right: 4px solid transparent;
+				border-top: 5px solid #fff;
+			}
+			.menu {
+				margin-top: 10px; background: #fff; border: 1px solid var(--border);
+				border-radius: 12px; box-shadow: 0 12px 36px rgba(31, 35, 40, 0.18);
+				overflow: hidden;
+			}
+			/* top tabs */
+			.tabs { display: flex; border-bottom: 1px solid var(--border); }
+			.tabs span {
+				flex: 1; text-align: center; padding: 12px; font-size: 14px;
+				font-weight: 600; color: var(--muted);
+			}
+			.tabs .on { color: var(--fg); box-shadow: inset 0 -2px 0 var(--fg); }
+			.body { padding: 14px 14px 6px; }
+			.clone-head {
+				display: flex; align-items: center; justify-content: space-between;
+				margin-bottom: 13px;
+			}
+			.clone-head .lhs {
+				display: flex; align-items: center; gap: 9px;
+				font-size: 15px; font-weight: 600; color: var(--fg);
+			}
+			.clone-head .lhs svg { width: 16px; height: 16px; fill: var(--fg); }
+			.help {
+				width: 17px; height: 17px; border-radius: 50%;
+				border: 1.4px solid var(--faint); color: var(--faint);
+				font-size: 11px; font-weight: 700; line-height: 14px; text-align: center;
+				font-family: var(--mono);
+			}
+			.subtabs {
+				display: flex; gap: 18px; border-bottom: 1px solid var(--border-soft);
+				margin-bottom: 13px;
+			}
+			.subtabs span {
+				padding-bottom: 9px; font-size: 13.5px; color: var(--muted); font-weight: 500;
+			}
+			.subtabs .on {
+				color: var(--fg); font-weight: 600;
+				box-shadow: inset 0 -2px 0 var(--orange);
+			}
+			.dl-btn {
+				display: block; width: 100%; text-align: center;
+				background: var(--green); color: #fff;
+				font-size: 15px; font-weight: 600; padding: 11px; border-radius: 7px;
+				border: 1px solid rgba(31, 35, 40, 0.12);
+				box-shadow: 0 1px 2px rgba(31, 35, 40, 0.12);
+			}
+			.caption {
+				margin: 11px 2px 0; font-size: 13px; line-height: 1.4; color: var(--muted);
+			}
+			.native-group { border-top: 1px solid var(--border-soft); margin-top: 13px; }
+			.native {
+				display: flex; align-items: center; gap: 11px;
+				padding: 11px 14px; font-size: 13.5px; color: #424a53;
+			}
+			.native svg { width: 16px; height: 16px; fill: var(--faint); flex-shrink: 0; }
+		</style>
+	</head>
+	<body>
+		<div class="stage">
+			<section class="left">
+				<div class="eyebrow">
+					<svg class="chrome" viewBox="0 0 48 48" aria-hidden="true">
+						<defs>
+							<linearGradient id="chrome-red" x1="3.2173" y1="15" x2="44.7812" y2="15" gradientUnits="userSpaceOnUse">
+								<stop offset="0" stop-color="#d93025" /><stop offset="1" stop-color="#ea4335" />
+							</linearGradient>
+							<linearGradient id="chrome-yellow" x1="20.7219" y1="47.6791" x2="41.5039" y2="11.6837" gradientUnits="userSpaceOnUse">
+								<stop offset="0" stop-color="#fcc934" /><stop offset="1" stop-color="#fbbc04" />
+							</linearGradient>
+							<linearGradient id="chrome-green" x1="26.5981" y1="46.5015" x2="5.8161" y2="10.506" gradientUnits="userSpaceOnUse">
+								<stop offset="0" stop-color="#1e8e3e" /><stop offset="1" stop-color="#34a853" />
+							</linearGradient>
+						</defs>
+						<circle cx="24" cy="23.9947" r="12" fill="#fff" />
+						<path d="M24,12H44.7812a23.9939,23.9939,0,0,0-41.5639.0029L13.6079,30l.0093-.0024A11.9852,11.9852,0,0,1,24,12Z" fill="url(#chrome-red)" />
+						<circle cx="24" cy="24" r="9.5" fill="#1a73e8" />
+						<path d="M34.3913,30.0029,24.0007,48A23.994,23.994,0,0,0,44.78,12.0031H23.9989l-.0025.0093A11.985,11.985,0,0,1,34.3913,30.0029Z" fill="url(#chrome-yellow)" />
+						<path d="M13.6086,30.0031,3.218,12.006A23.994,23.994,0,0,0,24.0025,48L34.3931,30.0029l-.0067-.0068a11.9852,11.9852,0,0,1-20.7778.007Z" fill="url(#chrome-green)" />
+					</svg>
+					Chrome extension
+				</div>
+				<div class="lockup">
+					<div class="appicon">
+						<svg viewBox="0 0 64 64" aria-hidden="true">
+							<g fill="none" stroke="#1f2328" stroke-width="6"
+								stroke-linecap="round" stroke-linejoin="round">
+								<line x1="21" y1="21" x2="21" y2="43" />
+								<path d="M44 21 C44 31 32 33 23.5 33" />
+								<circle cx="21" cy="14.5" r="6" fill="#ffffff" />
+								<circle cx="21" cy="49.5" r="6" fill="#ffffff" />
+								<circle cx="44" cy="14.5" r="6" fill="#ffffff" />
+							</g>
+						</svg>
+					</div>
+					<h1>
+						Clone <span class="anywhere">Anywhere</span>
+						<span class="for">for GitHub</span>
+					</h1>
+				</div>
+				<p class="tagline">
+					Clone any GitHub repository straight into your editor — or grab it as
+					a&nbsp;.zip — one click, no terminal.
+				</p>
+				<div class="dests">
+					<span class="pill">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+							stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<rect x="2.5" y="4" width="19" height="16" rx="2.5" />
+							<path d="M2.5 9 H21.5" />
+							<path d="M9 13 l-2 1.8 2 1.8 M15 13 l2 1.8 -2 1.8" />
+						</svg>
+						Your editor
+					</span>
+					<span class="pill">
+						<svg viewBox="0 0 24 24" fill="currentColor">
+							<path d="M10 4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6z" />
+						</svg>
+						.zip
+					</span>
+				</div>
+			</section>
+
+			<section class="right">
+				<div class="source">
+					<span class="code-btn">
+						<svg viewBox="0 0 16 16" aria-hidden="true">
+							<path d="M4.72 3.22a.75.75 0 0 1 1.06 1.06L2.06 8l3.72 3.72a.75.75 0 1 1-1.06 1.06L.47 8.53a.75.75 0 0 1 0-1.06l4.25-4.25Zm6.56 0a.75.75 0 1 0-1.06 1.06L13.94 8l-3.72 3.72a.75.75 0 1 0 1.06 1.06l4.25-4.25a.75.75 0 0 0 0-1.06l-4.25-4.25Z" />
+						</svg>
+						Code <span class="caret"></span>
+					</span>
+					<div class="menu">
+						<div class="tabs"><span class="on">Local</span><span>Codespaces</span></div>
+						<div class="body">
+							<div class="clone-head">
+								<span class="lhs">
+									<svg viewBox="0 0 16 16" aria-hidden="true">
+										<path d="M0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25Zm1.75-.25a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25ZM7.25 8a.75.75 0 0 1-.22.53l-2.25 2.25a.75.75 0 0 1-1.06-1.06L5.44 8 3.72 6.28a.75.75 0 1 1 1.06-1.06l2.25 2.25c.141.14.22.331.22.53Zm1.5 1.5h3a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1 0-1.5Z" />
+									</svg>
+									Clone
+								</span>
+								<span class="help">?</span>
+							</div>
+							<div class="subtabs">
+								<span class="on">.zip</span><span>HTTPS</span><span>SSH</span><span>GitHub CLI</span>
+							</div>
+							<span class="dl-btn">Download .zip</span>
+							<p class="caption">Download the current branch as a .zip archive.</p>
+						</div>
+						<div class="native-group">
+							<div class="native">
+								<svg viewBox="0 0 16 16" aria-hidden="true">
+									<path d="M14.25 1c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0 1 14.25 12h-3.727c.099 1.041.52 1.872 1.292 2.757A.75.75 0 0 1 11.25 16h-6.5a.75.75 0 0 1-.565-1.243c.772-.885 1.192-1.716 1.292-2.757H1.75A1.75 1.75 0 0 1 0 10.25v-7.5C0 1.784.784 1 1.75 1ZM1.75 2.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
+								</svg>
+								Open with GitHub Desktop
+							</div>
+							<div class="native">
+								<svg viewBox="0 0 16 16" aria-hidden="true">
+									<path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-.011-.013-2.914-2.914-.013-.011Z" />
+								</svg>
+								Download ZIP
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</div>
+	</body>
+</html>
