@@ -81,7 +81,7 @@ body:
     attributes:
       label: Expected Behavior
       description: A clear description of what you expected to happen.
-      placeholder: "I expected the 'Clone in VS Code' button to appear..."
+      placeholder: "I expected the 'Clone in …' button to appear..."
     validations:
       required: true
 

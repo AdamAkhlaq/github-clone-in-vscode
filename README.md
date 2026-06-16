@@ -1,6 +1,6 @@
-# GitHub Clone in VS Code 🚀
+# Clone Anywhere for GitHub 🚀
 
-> Seamlessly adds a "Clone in VS Code" button to GitHub repositories as if it were a native feature for instant one-click cloning.
+> Adds a "Clone in …" button to GitHub repositories that opens any repo in VS Code, Cursor, Windsurf, VSCodium, or VS Code Insiders — or downloads it as a .zip. One click, no terminal.
 
 <div align="center">
 
@@ -34,7 +34,7 @@ _Available for Chrome, Edge, Brave, Opera, and all Chromium-based browsers_
 
 ## 🎯 What it does
 
-This Chrome extension seamlessly integrates with GitHub's interface by adding a **"Clone in VS Code"** button directly to repository pages. With one click, it opens the repository in Visual Studio Code using the `vscode://` URL protocol, eliminating the need to manually copy URLs and run git commands.
+This Chrome extension seamlessly integrates with GitHub's interface by adding a **"Clone in …"** button directly to repository pages. With one click, it opens the repository in your chosen editor — VS Code, Cursor, Windsurf, VSCodium, or VS Code Insiders — using its `vscode://`-style deep link, eliminating the need to manually copy URLs and run git commands. Prefer the files without an editor? Pick the **`.zip`** destination to download a source archive instead.
 
 ### ✨ Key Features
 

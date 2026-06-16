@@ -2,15 +2,15 @@
 
 ## Supported Versions
 
-We actively support the following versions of the GitHub Clone in VS Code extension:
+We actively support the following versions of the Clone Anywhere for GitHub extension:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.0.0   | :white_check_mark: |
+| 1.1.0   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
-The security of our users is extremely important to us. If you discover a security vulnerability in the GitHub Clone in VS Code extension, please report it responsibly.
+The security of our users is extremely important to us. If you discover a security vulnerability in the Clone Anywhere for GitHub extension, please report it responsibly.
 
 ### How to Report
 
@@ -18,7 +18,7 @@ The security of our users is extremely important to us. If you discover a securi
 
 Instead, please report security vulnerabilities by:
 
-1. **Email**: Send details to [adam.akhlaq21@gmail.com] with the subject line "Security Vulnerability - GitHub Clone in VS Code"
+1. **Email**: Send details to [adam.akhlaq21@gmail.com] with the subject line "Security Vulnerability - Clone Anywhere for GitHub"
 2. **GitHub Security Advisories**: Use GitHub's [private vulnerability reporting feature](https://github.com/AdamAkhlaq/github-clone-in-vscode/security/advisories/new)
 
 ### What to Include
@@ -56,4 +56,4 @@ We appreciate security researchers who:
 - Do not perform actions that could harm our users
 - Report vulnerabilities in good faith
 
-Thank you for helping keep GitHub Clone in VS Code secure!
+Thank you for helping keep Clone Anywhere for GitHub secure!

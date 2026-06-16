@@ -1,4 +1,4 @@
-# GitHub Clone in VS Code Changes
+# Clone Anywhere for GitHub Changes
 
 ## Description
 

@@ -1,10 +1,10 @@
-# Privacy Policy for GitHub Clone in VS Code
+# Privacy Policy for Clone Anywhere for GitHub
 
 Last updated: **June 15, 2026**
 
 ## Overview
 
-GitHub Clone in VS Code ("the Extension") is committed to protecting your privacy. This privacy policy explains how our extension handles information.
+Clone Anywhere for GitHub ("the Extension") is committed to protecting your privacy. This privacy policy explains how our extension handles information.
 
 ## Information We Collect
 

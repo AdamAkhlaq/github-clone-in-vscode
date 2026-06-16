@@ -1,4 +1,4 @@
-# Contributing to GitHub Clone in VS Code
+# Contributing to Clone Anywhere for GitHub
 
 Thank you for your interest in contributing! We welcome contributions from the community.
 
@@ -123,4 +123,4 @@ We're especially looking for help with:
 - **Bug reports**: [GitHub Issues](https://github.com/AdamAkhlaq/github-clone-in-vscode/issues)
 - **Direct contact**: Open an issue or discussion
 
-Thank you for contributing to GitHub Clone in VS Code! 🚀
+Thank you for contributing to Clone Anywhere for GitHub! 🚀
