@@ -19,7 +19,7 @@ The security of our users is extremely important to us. If you discover a securi
 Instead, please report security vulnerabilities by:
 
 1. **Email**: Send details to [adam.akhlaq21@gmail.com] with the subject line "Security Vulnerability - Clone Anywhere for GitHub"
-2. **GitHub Security Advisories**: Use GitHub's [private vulnerability reporting feature](https://github.com/AdamAkhlaq/github-clone-in-vscode/security/advisories/new)
+2. **GitHub Security Advisories**: Use GitHub's [private vulnerability reporting feature](https://github.com/AdamAkhlaq/clone-anywhere-for-github/security/advisories/new)
 
 ### What to Include
 

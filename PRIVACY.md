@@ -64,7 +64,7 @@ We may update this privacy policy from time to time. Any changes will be posted 
 
 If you have questions about this privacy policy, please:
 
-- Open an issue on [GitHub](https://github.com/AdamAkhlaq/github-clone-in-vscode/issues)
+- Open an issue on [GitHub](https://github.com/AdamAkhlaq/clone-anywhere-for-github/issues)
 - Contact us through the Chrome Web Store
 
 ## Your Rights

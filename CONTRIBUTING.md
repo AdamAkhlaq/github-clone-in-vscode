@@ -25,8 +25,8 @@ Thank you for your interest in contributing! We welcome contributions from the c
 
 ```bash
 # Clone your fork
-git clone https://github.com/your-username/github-clone-in-vscode.git
-cd github-clone-in-vscode
+git clone https://github.com/your-username/clone-anywhere-for-github.git
+cd clone-anywhere-for-github
 
 # Install dependencies
 npm install
@@ -119,8 +119,8 @@ We're especially looking for help with:
 
 ## ❓ Questions?
 
-- **General questions**: [GitHub Discussions](https://github.com/AdamAkhlaq/github-clone-in-vscode/discussions)
-- **Bug reports**: [GitHub Issues](https://github.com/AdamAkhlaq/github-clone-in-vscode/issues)
+- **General questions**: [GitHub Discussions](https://github.com/AdamAkhlaq/clone-anywhere-for-github/discussions)
+- **Bug reports**: [GitHub Issues](https://github.com/AdamAkhlaq/clone-anywhere-for-github/issues)
 - **Direct contact**: Open an issue or discussion
 
 Thank you for contributing to Clone Anywhere for GitHub! 🚀

@@ -8,13 +8,13 @@
 
 </div>
 
-[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/effhdkonnknoebahhnnciakckbbfmcpi?style=flat-square&logo=googlechrome&logoColor=white&label=Chrome%20Web%20Store)](https://chromewebstore.google.com/detail/github-clone-in-vs-code/effhdkonnknoebahhnnciakckbbfmcpi)
-[![Chrome Web Store Users](https://img.shields.io/chrome-web-store/users/effhdkonnknoebahhnnciakckbbfmcpi?style=flat-square&color=blue&label=Users)](https://chromewebstore.google.com/detail/github-clone-in-vs-code/effhdkonnknoebahhnnciakckbbfmcpi)
-[![Chrome Web Store Rating](https://img.shields.io/chrome-web-store/rating/effhdkonnknoebahhnnciakckbbfmcpi?style=flat-square&color=orange&label=Rating)](https://chromewebstore.google.com/detail/github-clone-in-vs-code/effhdkonnknoebahhnnciakckbbfmcpi)
-[![GitHub stars](https://img.shields.io/github/stars/AdamAkhlaq/github-clone-in-vscode?style=flat-square&logo=github)](https://github.com/AdamAkhlaq/github-clone-in-vscode/stargazers)
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/effhdkonnknoebahhnnciakckbbfmcpi?style=flat-square&logo=googlechrome&logoColor=white&label=Chrome%20Web%20Store)](https://chromewebstore.google.com/detail/clone-anywhere-for-github/effhdkonnknoebahhnnciakckbbfmcpi)
+[![Chrome Web Store Users](https://img.shields.io/chrome-web-store/users/effhdkonnknoebahhnnciakckbbfmcpi?style=flat-square&color=blue&label=Users)](https://chromewebstore.google.com/detail/clone-anywhere-for-github/effhdkonnknoebahhnnciakckbbfmcpi)
+[![Chrome Web Store Rating](https://img.shields.io/chrome-web-store/rating/effhdkonnknoebahhnnciakckbbfmcpi?style=flat-square&color=orange&label=Rating)](https://chromewebstore.google.com/detail/clone-anywhere-for-github/effhdkonnknoebahhnnciakckbbfmcpi)
+[![GitHub stars](https://img.shields.io/github/stars/AdamAkhlaq/clone-anywhere-for-github?style=flat-square&logo=github)](https://github.com/AdamAkhlaq/clone-anywhere-for-github/stargazers)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-green?style=flat-square)](https://developer.chrome.com/docs/extensions/mv3/)
-[![MIT License](https://img.shields.io/github/license/AdamAkhlaq/github-clone-in-vscode?style=flat-square)](LICENSE)
+[![MIT License](https://img.shields.io/github/license/AdamAkhlaq/clone-anywhere-for-github?style=flat-square)](LICENSE)
 
 ---
 
@@ -24,7 +24,7 @@
 
 ### **Install from Chrome Web Store**
 
-[![Add to Chrome](https://img.shields.io/badge/Add%20to%20Chrome-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/github-clone-in-vs-code/effhdkonnknoebahhnnciakckbbfmcpi)
+[![Add to Chrome](https://img.shields.io/badge/Add%20to%20Chrome-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/clone-anywhere-for-github/effhdkonnknoebahhnnciakckbbfmcpi)
 
 _Available for Chrome, Edge, Brave, Opera, and all Chromium-based browsers_
 
@@ -52,7 +52,7 @@ This Chrome extension seamlessly integrates with GitHub's interface by adding a 
 
 ## 🚀 How it works
 
-1. **Visit any GitHub repository** (e.g., [github.com/AdamAkhlaq/github-clone-in-vscode](https://github.com/AdamAkhlaq/github-clone-in-vscode))
+1. **Visit any GitHub repository** (e.g., [github.com/AdamAkhlaq/clone-anywhere-for-github](https://github.com/AdamAkhlaq/clone-anywhere-for-github))
 2. **Click the green "Code" button** on the repository page
 
    ![Code Dropdown](.github/images/dropdown.png)
@@ -75,13 +75,13 @@ Prefer the source files without an editor? Pick the **`.zip`** destination and t
 
 ### Chrome Web Store (Recommended)
 
-1. Visit the [Chrome Web Store page](https://chromewebstore.google.com/detail/github-clone-in-vs-code/effhdkonnknoebahhnnciakckbbfmcpi)
+1. Visit the [Chrome Web Store page](https://chromewebstore.google.com/detail/clone-anywhere-for-github/effhdkonnknoebahhnnciakckbbfmcpi)
 2. Click "Add to Chrome"
 3. Navigate to any GitHub repository and start cloning!
 
 ### Manual Installation (For Developers)
 
-1. Download the latest release from [GitHub Releases](https://github.com/AdamAkhlaq/github-clone-in-vscode/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/AdamAkhlaq/clone-anywhere-for-github/releases)
 2. Extract the ZIP file
 3. Open Chrome and navigate to `chrome://extensions/`
 4. Enable "Developer mode" in the top right
@@ -115,8 +115,8 @@ This extension works seamlessly across all Chromium-based browsers, providing th
 
 ```bash
 # Clone the repository
-git clone https://github.com/AdamAkhlaq/github-clone-in-vscode.git
-cd github-clone-in-vscode
+git clone https://github.com/AdamAkhlaq/clone-anywhere-for-github.git
+cd clone-anywhere-for-github
 
 # Install dependencies
 npm install
@@ -156,8 +156,8 @@ npm run package
 Contributions are welcomed! Here's how you can help:
 
 1. **⭐ Star the repository** to show your support
-2. **🐛 Report bugs** by [opening an issue](https://github.com/AdamAkhlaq/github-clone-in-vscode/issues)
-3. **💡 Suggest features** via [GitHub discussions](https://github.com/AdamAkhlaq/github-clone-in-vscode/discussions)
+2. **🐛 Report bugs** by [opening an issue](https://github.com/AdamAkhlaq/clone-anywhere-for-github/issues)
+3. **💡 Suggest features** via [GitHub discussions](https://github.com/AdamAkhlaq/clone-anywhere-for-github/discussions)
 4. **🔧 Submit pull requests** for fixes and improvements
 
 ---
@@ -182,7 +182,7 @@ Contributions are welcomed! Here's how you can help:
 
 ### Getting Help
 
-- Check [existing issues](https://github.com/AdamAkhlaq/github-clone-in-vscode/issues)
+- Check [existing issues](https://github.com/AdamAkhlaq/clone-anywhere-for-github/issues)
 - Create a new issue with detailed information
 - Include browser version, OS, and steps to reproduce
 
